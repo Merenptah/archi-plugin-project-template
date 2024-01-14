@@ -25,6 +25,7 @@ import com.archimatetool.model.FolderType;
 import com.archimatetool.model.IDiagramModel;
 import com.archimatetool.model.IFolder;
 import com.archiplugin.projectcreator.project.CreateNewProject;
+import com.archiplugin.projectcreator.project.ProjectDefinition;
 
 public class ProjectCreationMenuExtensionContributionFactory extends ExtensionContributionFactory {
 
@@ -49,7 +50,7 @@ public class ProjectCreationMenuExtensionContributionFactory extends ExtensionCo
 		@Override
 		public void run() {
 			// Execute Command
-			Command cmd = CreateNewProject.from(fCurrentFolder);
+			Command cmd = CreateNewProject.from(fCurrentFolder, new ProjectDefinition("Dummy"));
 			CommandStack commandStack = (CommandStack) fCurrentFolder.getAdapter(CommandStack.class);
 			commandStack.execute(cmd);
 		}

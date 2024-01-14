@@ -11,15 +11,17 @@ import com.archimatetool.model.IFolder;
 public class CreateNewProject extends Command {
 
 	private final IFolder parentFolder;
+	private final ProjectDefinition projectDefinition;
 	private IFolder newFolder;
 
-	private CreateNewProject(IFolder parentFolder) {
+	private CreateNewProject(IFolder parentFolder, ProjectDefinition projectDefinition) {
 		super();
 		this.parentFolder = parentFolder;
+		this.projectDefinition = projectDefinition;
 	}
 
-	public static CreateNewProject from(IFolder parent) {
-		return new CreateNewProject(parent);
+	public static CreateNewProject from(IFolder parent, ProjectDefinition projectDefinition) {
+		return new CreateNewProject(parent, projectDefinition);
 	}
 
 	@Override
@@ -39,7 +41,7 @@ public class CreateNewProject extends Command {
 
 	private void createFolder() {
 		IFolder newFolder = IArchimateFactory.eINSTANCE.createFolder();
-		newFolder.setName("Dummy");
+		newFolder.setName(projectDefinition.name());
 		newFolder.setType(FolderType.USER);
 
 		this.newFolder = newFolder;
