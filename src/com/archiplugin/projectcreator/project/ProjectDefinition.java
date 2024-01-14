@@ -1,5 +1,7 @@
 package com.archiplugin.projectcreator.project;
 
-public record ProjectDefinition(String name) {
+import java.util.Map;
+
+public record ProjectDefinition(String name, Map<String, String> properties) {
 
 }

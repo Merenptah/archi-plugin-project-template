@@ -43,6 +43,12 @@ public class CreateNewProject extends Command {
 		IFolder newFolder = IArchimateFactory.eINSTANCE.createFolder();
 		newFolder.setName(projectDefinition.name());
 		newFolder.setType(FolderType.USER);
+		projectDefinition.properties().entrySet().forEach(e -> {
+			var prop = IArchimateFactory.eINSTANCE.createProperty();
+			prop.setKey(e.getKey());
+			prop.setValue(e.getValue());
+			newFolder.getProperties().add(prop);
+		});
 
 		this.newFolder = newFolder;
 
