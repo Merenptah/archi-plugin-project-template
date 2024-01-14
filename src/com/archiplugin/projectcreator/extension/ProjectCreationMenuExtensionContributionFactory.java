@@ -21,11 +21,10 @@ import org.eclipse.ui.menus.ExtensionContributionFactory;
 import org.eclipse.ui.menus.IContributionRoot;
 import org.eclipse.ui.services.IServiceLocator;
 
-import com.archimatetool.editor.views.tree.commands.NewFolderCommand;
 import com.archimatetool.model.FolderType;
-import com.archimatetool.model.IArchimateFactory;
 import com.archimatetool.model.IDiagramModel;
 import com.archimatetool.model.IFolder;
+import com.archiplugin.projectcreator.project.CreateNewProject;
 
 public class ProjectCreationMenuExtensionContributionFactory extends ExtensionContributionFactory {
 
@@ -50,17 +49,9 @@ public class ProjectCreationMenuExtensionContributionFactory extends ExtensionCo
 		@Override
 		public void run() {
 			// Execute Command
-			Command cmd = new NewFolderCommand(fCurrentFolder, createFolder());
+			Command cmd = CreateNewProject.from(fCurrentFolder);
 			CommandStack commandStack = (CommandStack) fCurrentFolder.getAdapter(CommandStack.class);
 			commandStack.execute(cmd);
-		}
-
-		private IFolder createFolder() {
-			IFolder result = IArchimateFactory.eINSTANCE.createFolder();
-			result.setName("Dummy");
-			result.setType(FolderType.USER);
-
-			return result;
 		}
 
 		@Override
