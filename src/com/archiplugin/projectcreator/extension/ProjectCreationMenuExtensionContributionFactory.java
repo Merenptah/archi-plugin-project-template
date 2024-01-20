@@ -5,6 +5,7 @@
  */
 package com.archiplugin.projectcreator.extension;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -26,6 +27,8 @@ import org.eclipse.ui.services.IServiceLocator;
 import com.archimatetool.model.FolderType;
 import com.archimatetool.model.IDiagramModel;
 import com.archimatetool.model.IFolder;
+import com.archiplugin.projectcreator.Activator;
+import com.archiplugin.projectcreator.preferences.ProjectCreatorPreferenceConstants;
 import com.archiplugin.projectcreator.project.CreateNewProject;
 import com.archiplugin.projectcreator.project.ProjectDefinition;
 
@@ -54,14 +57,15 @@ public class ProjectCreationMenuExtensionContributionFactory extends ExtensionCo
 		@Override
 		public void run() {
 			findViewFolder().ifPresent(views -> {
-				var templates = findProjectTemplatesIn(views);
+				findProjectTemplateIn(views).ifPresent(template -> {
+					var templatePropertyKeys = propertyKeysOf(template);
+					// Execute Command
+					Command cmd = CreateNewProject.from(fCurrentFolder, new ProjectDefinition("Dummy",
+							templatePropertyKeys.stream().collect(Collectors.toMap(k -> k, k -> ""))));
+					CommandStack commandStack = (CommandStack) fCurrentFolder.getAdapter(CommandStack.class);
+					commandStack.execute(cmd);
+				});
 
-				var templatePropertyKeys = propertyKeysOf(templates);
-				// Execute Command
-				Command cmd = CreateNewProject.from(fCurrentFolder, new ProjectDefinition("Dummy",
-						templatePropertyKeys.stream().collect(Collectors.toMap(k -> k, k -> ""))));
-				CommandStack commandStack = (CommandStack) fCurrentFolder.getAdapter(CommandStack.class);
-				commandStack.execute(cmd);
 			});
 
 		}
@@ -109,13 +113,29 @@ public class ProjectCreationMenuExtensionContributionFactory extends ExtensionCo
 		});
 	}
 
-	public List<String> propertyKeysOf(List<IFolder> templates) {
-		return Optional.ofNullable(templates.get(0)).map(t -> t.getProperties())
-				.map(props -> props.stream().map(p -> p.getKey()).toList()).orElse(List.of());
+	public List<String> propertyKeysOf(IFolder template) {
+		return template.getProperties().stream().map(p -> p.getKey()).toList();
 	}
 
-	private List<IFolder> findProjectTemplatesIn(IFolder viewsFolder) {
-		return viewsFolder.getFolders().stream().filter(f -> f.getName().contains("Templates")).toList();
+	private Optional<IFolder> findProjectTemplateIn(IFolder viewsFolder) {
+		var templateFolderId = Activator.INSTANCE.getPreferenceStore()
+				.getString(ProjectCreatorPreferenceConstants.PROJECT_CREATION_TEMPLATE_FOLDER);
+
+		for (Iterator iterator = viewsFolder.getFolders().iterator(); iterator.hasNext();) {
+			IFolder f = (IFolder) iterator.next();
+
+			if (f.getId().equals(templateFolderId)) {
+				return Optional.of(f);
+			}
+
+			var intermediateResult = findProjectTemplateIn(f);
+			if (intermediateResult.isPresent()) {
+				return intermediateResult;
+			}
+
+		}
+
+		return Optional.empty();
 	}
 
 	private boolean isInDiagramFolder(IFolder folder) {
