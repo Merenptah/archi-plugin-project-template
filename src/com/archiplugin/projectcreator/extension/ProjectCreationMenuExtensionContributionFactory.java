@@ -13,7 +13,6 @@ import org.eclipse.core.expressions.EvaluationResult;
 import org.eclipse.core.expressions.Expression;
 import org.eclipse.core.expressions.IEvaluationContext;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.emf.common.util.BasicEList;
 import org.eclipse.gef.commands.Command;
 import org.eclipse.gef.commands.CommandStack;
 import org.eclipse.jface.action.Action;
@@ -40,9 +39,10 @@ public class ProjectCreationMenuExtensionContributionFactory extends ExtensionCo
 
 	@Override
 	public void createContributionItems(IServiceLocator serviceLocator, IContributionRoot additions) {
-		var item = new ActionContributionItem(new NewProjectFromTemplateAction());
 		additions.addContributionItem(new Separator(), isVisibibleIfDiagramFolder);
-		additions.addContributionItem(item, isVisibibleIfDiagramFolder);
+
+		var newProjectFromTemplate = new ActionContributionItem(new NewProjectFromTemplateAction());
+		additions.addContributionItem(newProjectFromTemplate, isVisibibleIfDiagramFolder);
 	}
 
 	private class NewProjectFromTemplateAction extends Action {
@@ -53,15 +53,17 @@ public class ProjectCreationMenuExtensionContributionFactory extends ExtensionCo
 
 		@Override
 		public void run() {
-			viewsFolder = findViewFolder();
-			var templates = findProjectTemplates();
+			findViewFolder().ifPresent(views -> {
+				var templates = findProjectTemplatesIn(views);
 
-			var templatePropertyKeys = propertyKeysOf(templates);
-			// Execute Command
-			Command cmd = CreateNewProject.from(fCurrentFolder, new ProjectDefinition("Dummy",
-					templatePropertyKeys.stream().collect(Collectors.toMap(k -> k, k -> ""))));
-			CommandStack commandStack = (CommandStack) fCurrentFolder.getAdapter(CommandStack.class);
-			commandStack.execute(cmd);
+				var templatePropertyKeys = propertyKeysOf(templates);
+				// Execute Command
+				Command cmd = CreateNewProject.from(fCurrentFolder, new ProjectDefinition("Dummy",
+						templatePropertyKeys.stream().collect(Collectors.toMap(k -> k, k -> ""))));
+				CommandStack commandStack = (CommandStack) fCurrentFolder.getAdapter(CommandStack.class);
+				commandStack.execute(cmd);
+			});
+
 		}
 
 		@Override
@@ -112,10 +114,8 @@ public class ProjectCreationMenuExtensionContributionFactory extends ExtensionCo
 				.map(props -> props.stream().map(p -> p.getKey()).toList()).orElse(List.of());
 	}
 
-	private List<IFolder> findProjectTemplates() {
-		return viewsFolder.flatMap((IFolder views) -> views.getFolders().stream()
-				.filter(f -> f.getName().contains("Templates")).findFirst()).map(f -> f.getFolders())
-				.orElse(new BasicEList<IFolder>());
+	private List<IFolder> findProjectTemplatesIn(IFolder viewsFolder) {
+		return viewsFolder.getFolders().stream().filter(f -> f.getName().contains("Templates")).toList();
 	}
 
 	private boolean isInDiagramFolder(IFolder folder) {

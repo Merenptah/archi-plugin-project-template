@@ -1,5 +1,6 @@
 package com.archiplugin.projectcreator.project;
 
+import java.util.Map.Entry;
 import java.util.Optional;
 
 import org.eclipse.gef.commands.Command;
@@ -7,6 +8,7 @@ import org.eclipse.gef.commands.Command;
 import com.archimatetool.model.FolderType;
 import com.archimatetool.model.IArchimateFactory;
 import com.archimatetool.model.IFolder;
+import com.archimatetool.model.IProperty;
 
 public class CreateNewProject extends Command {
 
@@ -41,18 +43,30 @@ public class CreateNewProject extends Command {
 
 	private void createFolder() {
 		IFolder newFolder = IArchimateFactory.eINSTANCE.createFolder();
-		newFolder.setName(projectDefinition.name());
-		newFolder.setType(FolderType.USER);
-		projectDefinition.properties().entrySet().forEach(e -> {
-			var prop = IArchimateFactory.eINSTANCE.createProperty();
-			prop.setKey(e.getKey());
-			prop.setValue(e.getValue());
-			newFolder.getProperties().add(prop);
-		});
+
+		parentFolder.getFolders().add(configured(newFolder));
 
 		this.newFolder = newFolder;
+	}
 
-		parentFolder.getFolders().add(newFolder);
+	private IFolder configured(IFolder newFolder) {
+		newFolder.setName(projectDefinition.name());
+		newFolder.setType(FolderType.USER);
+
+		projectDefinition.properties().entrySet().forEach(e -> {
+			var prop = IArchimateFactory.eINSTANCE.createProperty();
+
+			newFolder.getProperties().add(configured(e, prop));
+		});
+
+		return newFolder;
+	}
+
+	private IProperty configured(Entry<String, String> e, IProperty prop) {
+		prop.setKey(e.getKey());
+		prop.setValue(e.getValue());
+
+		return prop;
 	}
 
 }
