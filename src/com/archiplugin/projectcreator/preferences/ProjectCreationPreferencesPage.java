@@ -40,25 +40,28 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 
 	@Override
 	protected Control createContents(Composite parent) {
-		Composite client = new Composite(parent, SWT.NULL);
-		GridLayout layout = new GridLayout();
-		layout.marginWidth = layout.marginHeight = 0;
-		client.setLayout(layout);
+		Composite page = createPage(parent);
 
-		Group settingsGroup = new Group(client, SWT.NULL);
-		settingsGroup.setText(Messages.ProjectCreationPreferencesPage_Settings);
-		settingsGroup.setLayout(new GridLayout(3, false));
-		GridData gd = new GridData(GridData.FILL_HORIZONTAL);
-		gd.widthHint = 500;
-		settingsGroup.setLayoutData(gd);
+		Group settingsGroup = settingsGroupOn(page, Messages.ProjectCreationPreferencesPage_Settings);
 
+		createLabelIn(settingsGroup, Messages.ProjectCreationPreferencesPage_TemplateFolder);
+
+		templateSelector = createTemplateSelectorIn(settingsGroup);
+		setSelectionAndSelectableValuesOfTemplateSelector();
+
+		return page;
+	}
+
+	private void createLabelIn(Group settingsGroup, String text) {
 		Label label = new Label(settingsGroup, SWT.NULL);
-		label.setText(Messages.ProjectCreationPreferencesPage_TemplateFolder);
+		label.setText(text);
+	}
 
-		templateSelector = new ComboViewer(settingsGroup, SWT.READ_ONLY);
-		templateSelector.getCombo().setLayoutData(createHorizontalGridData(1));
+	private ComboViewer createTemplateSelectorIn(Group settingsGroup) {
+		var result = new ComboViewer(settingsGroup, SWT.READ_ONLY);
 
-		templateSelector.setContentProvider(new IStructuredContentProvider() {
+		result.getCombo().setLayoutData(createHorizontalGridData(1));
+		result.setContentProvider(new IStructuredContentProvider() {
 			@Override
 			public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
 			}
@@ -72,8 +75,7 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 				return (Object[]) inputElement;
 			}
 		});
-
-		templateSelector.setLabelProvider(new LabelProvider() {
+		result.setLabelProvider(new LabelProvider() {
 			@Override
 			public String getText(Object element) {
 				var folder = (ModelViewFolder) element;
@@ -83,10 +85,31 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 				return name;
 			}
 		});
+		result.setComparator(new ViewerComparator());
 
-		templateSelector.setComparator(new ViewerComparator());
+		return result;
+	}
 
-		setValues();
+	private Group settingsGroupOn(Composite page, String groupName) {
+		Group settingsGroup = new Group(page, SWT.NULL);
+		settingsGroup.setText(groupName);
+		settingsGroup.setLayout(new GridLayout(3, false));
+
+		GridData gd = new GridData(GridData.FILL_HORIZONTAL);
+		gd.widthHint = 500;
+
+		settingsGroup.setLayoutData(gd);
+
+		return settingsGroup;
+	}
+
+	private Composite createPage(Composite parent) {
+		Composite client = new Composite(parent, SWT.NULL);
+
+		GridLayout layout = new GridLayout();
+		layout.marginWidth = layout.marginHeight = 0;
+
+		client.setLayout(layout);
 
 		return client;
 	}
@@ -97,19 +120,21 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 		return gd;
 	}
 
-	private void setValues() {
+	private void setSelectionAndSelectableValuesOfTemplateSelector() {
 		var models = IEditorModelManager.INSTANCE.getModels();
 
-		var input = map(models.stream().collect(Collectors.toMap(m -> m.getName(), m -> m.getFolders())));
+		Map<String, List<IFolder>> modelNameToTopLevelFolders = models.stream()
+				.collect(Collectors.toMap(m -> m.getName(), m -> m.getFolders()));
+		var selectableValues = flattenHierarchy(modelNameToTopLevelFolders);
 
-		templateSelector.setInput(input.toArray());
+		templateSelector.setInput(selectableValues.toArray());
 
 		var templateFolder = getPreferenceStore().getString(PROJECT_CREATION_TEMPLATE_FOLDER);
-		input.stream().filter(f -> f.folder().getId().equals(templateFolder)).findFirst()
+		selectableValues.stream().filter(f -> f.folder().getId().equals(templateFolder)).findFirst()
 				.ifPresent(s -> templateSelector.setSelection(new StructuredSelection(s)));
 	}
 
-	private List<ModelViewFolder> map(Map<String, List<IFolder>> input) {
+	private List<ModelViewFolder> flattenHierarchy(Map<String, List<IFolder>> input) {
 		return input.entrySet().stream().flatMap(e -> {
 			return e.getValue().stream().filter(v -> v.getType().equals(FolderType.DIAGRAMS)).flatMap(
 					v -> dive(v.getFolders().stream().collect(Collectors.toMap(f -> f.getName(), Function.identity())))

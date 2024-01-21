@@ -84,21 +84,27 @@ public class ProjectCreationMenuExtensionContributionFactory extends ExtensionCo
 	private Expression isVisibibleIfDiagramFolder = new Expression() {
 		@Override
 		public EvaluationResult evaluate(IEvaluationContext context) throws CoreException {
-			Object o = context.getDefaultVariable();
+			Object defaultVariable = context.getDefaultVariable();
 
 			fCurrentFolder = null;
 
-			if (o instanceof List<?> && ((List<?>) o).size() > 0) {
-				o = ((List<?>) o).get(0);
+			if (!isNonEmptyList(defaultVariable)) {
+				return EvaluationResult.FALSE;
+			}
 
-				if (o instanceof IFolder && isInDiagramFolder((IFolder) o)) {
-					fCurrentFolder = (IFolder) o;
-				} else if (o instanceof IDiagramModel) {
-					fCurrentFolder = (IFolder) ((IDiagramModel) o).eContainer();
-				}
+			Object firstElement = ((List<?>) defaultVariable).get(0);
+
+			if (firstElement instanceof IFolder && isInDiagramFolder((IFolder) firstElement)) {
+				fCurrentFolder = (IFolder) defaultVariable;
+			} else if (firstElement instanceof IDiagramModel) {
+				fCurrentFolder = (IFolder) ((IDiagramModel) firstElement).eContainer();
 			}
 
 			return fCurrentFolder != null ? EvaluationResult.TRUE : EvaluationResult.FALSE;
+		}
+
+		private boolean isNonEmptyList(Object o) {
+			return o instanceof List<?> && ((List<?>) o).size() > 0;
 		}
 	};
 
