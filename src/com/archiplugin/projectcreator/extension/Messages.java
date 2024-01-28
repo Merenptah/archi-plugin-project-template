@@ -12,6 +12,7 @@ public class Messages extends NLS {
 	private static final String BUNDLE_NAME = "com.archiplugin.projectcreator.extension.messages"; //$NON-NLS-1$
 
 	public static String NewProjectFromTemplateMenuEntry;
+	public static String NewViewFromTemplateMenuEntry;
 
 	static {
 		// initialize resource bundle

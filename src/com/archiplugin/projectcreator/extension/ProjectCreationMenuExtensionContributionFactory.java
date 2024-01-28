@@ -20,6 +20,7 @@ import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.ActionContributionItem;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.ui.contexts.IContextService;
 import org.eclipse.ui.menus.ExtensionContributionFactory;
 import org.eclipse.ui.menus.IContributionRoot;
 import org.eclipse.ui.services.IServiceLocator;
@@ -27,28 +28,45 @@ import org.eclipse.ui.services.IServiceLocator;
 import com.archimatetool.model.FolderType;
 import com.archimatetool.model.IDiagramModel;
 import com.archimatetool.model.IFolder;
+import com.archimatetool.model.IProperties;
 import com.archiplugin.projectcreator.Activator;
 import com.archiplugin.projectcreator.preferences.ProjectCreatorPreferenceConstants;
 import com.archiplugin.projectcreator.project.CreateNewProject;
+import com.archiplugin.projectcreator.project.CreateViewFromTemplate;
 import com.archiplugin.projectcreator.project.ProjectDefinition;
+import com.archiplugin.projectcreator.project.ViewDefinition;
 
 public class ProjectCreationMenuExtensionContributionFactory extends ExtensionContributionFactory {
 
 	private IFolder fCurrentFolder;
+	private IFolder templateFolder;
 
 	public ProjectCreationMenuExtensionContributionFactory() {
 	}
 
 	@Override
 	public void createContributionItems(IServiceLocator serviceLocator, IContributionRoot additions) {
-		findViewFolder().ifPresent(views -> {
-			findProjectTemplateIn(views).ifPresent(template -> {
-				additions.addContributionItem(new Separator(), isVisibibleIfDiagramFolder);
+		var contextService = serviceLocator.getService(IContextService.class);
+		var context = contextService.getContext(getLocation());
 
-				var newProjectFromTemplate = new ActionContributionItem(new NewProjectFromTemplateAction(template));
-				additions.addContributionItem(newProjectFromTemplate, isVisibibleIfDiagramFolder);
-			});
+		additions.addContributionItem(new Separator(), isVisibibleIfDiagramFolder);
+
+		var newProjectFromTemplate = new ActionContributionItem(new NewProjectFromTemplateAction(templateFolder));
+		additions.addContributionItem(newProjectFromTemplate, isVisibibleIfDiagramFolder);
+
+		if (templateFolder == null) {
+			return;
+		}
+
+		templateFolder.getElements().forEach(o -> {
+			if (o instanceof IDiagramModel) {
+				IDiagramModel diagramTemplate = (IDiagramModel) o;
+
+				var newViewFromTemplate = new ActionContributionItem(new NewViewFromTemplateAction(diagramTemplate));
+				additions.addContributionItem(newViewFromTemplate, isVisibibleIfDiagramFolder);
+			}
 		});
+
 	}
 
 	private class NewProjectFromTemplateAction extends Action {
@@ -85,6 +103,40 @@ public class ProjectCreationMenuExtensionContributionFactory extends ExtensionCo
 		}
 	};
 
+	private class NewViewFromTemplateAction extends Action {
+		private final IDiagramModel templateDiagram;
+
+		NewViewFromTemplateAction(IDiagramModel templateDiagram) {
+			this.templateDiagram = templateDiagram;
+		}
+
+		@Override
+		public String getText() {
+			return Messages.NewViewFromTemplateMenuEntry;
+		}
+
+		@Override
+		public void run() {
+			var templatePropertyKeys = propertyKeysOf(templateDiagram);
+
+			Command cmd = CreateViewFromTemplate.from(fCurrentFolder, templateDiagram, new ViewDefinition("New View",
+					templatePropertyKeys.stream().collect(Collectors.toMap(k -> k, k -> ""))));
+			CommandStack commandStack = (CommandStack) fCurrentFolder.getAdapter(CommandStack.class);
+			commandStack.execute(cmd);
+
+		}
+
+		@Override
+		public String getId() {
+			return "newViewFromTemplateAction"; //$NON-NLS-1$
+		};
+
+		@Override
+		public ImageDescriptor getImageDescriptor() {
+			return Images.projectImage();
+		}
+	};
+
 	private Expression isVisibibleIfDiagramFolder = new Expression() {
 		@Override
 		public EvaluationResult evaluate(IEvaluationContext context) throws CoreException {
@@ -104,7 +156,9 @@ public class ProjectCreationMenuExtensionContributionFactory extends ExtensionCo
 				fCurrentFolder = (IFolder) ((IDiagramModel) firstElement).eContainer();
 			}
 
-			return fCurrentFolder != null ? EvaluationResult.TRUE : EvaluationResult.FALSE;
+			templateFolder = findViewFolder().flatMap(views -> findProjectTemplateIn(views)).orElse(null);
+
+			return fCurrentFolder != null && templateFolder != null ? EvaluationResult.TRUE : EvaluationResult.FALSE;
 		}
 
 		private boolean isNonEmptyList(Object o) {
@@ -123,7 +177,7 @@ public class ProjectCreationMenuExtensionContributionFactory extends ExtensionCo
 		});
 	}
 
-	public List<String> propertyKeysOf(IFolder template) {
+	public List<String> propertyKeysOf(IProperties template) {
 		return template.getProperties().stream().map(p -> p.getKey()).toList();
 	}
 
