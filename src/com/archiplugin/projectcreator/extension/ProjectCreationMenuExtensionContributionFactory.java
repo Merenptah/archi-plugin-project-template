@@ -1,8 +1,3 @@
-/**
- * This program and the accompanying materials
- * are made available under the terms of the License
- * which accompanies this distribution in the file LICENSE.txt
- */
 package com.archiplugin.projectcreator.extension;
 
 import java.util.Iterator;
@@ -10,10 +5,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.eclipse.core.expressions.EvaluationResult;
-import org.eclipse.core.expressions.Expression;
-import org.eclipse.core.expressions.IEvaluationContext;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.gef.commands.Command;
 import org.eclipse.gef.commands.CommandStack;
 import org.eclipse.jface.action.Action;
@@ -39,9 +30,6 @@ import com.archiplugin.projectcreator.project.ViewDefinition;
 
 public class ProjectCreationMenuExtensionContributionFactory extends ExtensionContributionFactory {
 
-	private IFolder fCurrentFolder;
-	private IFolder templateFolder;
-
 	public ProjectCreationMenuExtensionContributionFactory() {
 	}
 
@@ -50,27 +38,23 @@ public class ProjectCreationMenuExtensionContributionFactory extends ExtensionCo
 		var selectionService = serviceLocator.getService(ISelectionService.class);
 		var selection = (IStructuredSelection) selectionService.getSelection();
 
-		fCurrentFolder = currentFolder(selection).orElse(null);
+		currentFolder(selection).ifPresent(currentFolder -> {
+			findViewFolder(currentFolder).flatMap(views -> findProjectTemplateIn(views)).ifPresent(templateFolder -> {
+				additions.addContributionItem(new Separator(), null);
 
-		findViewFolder().flatMap(views -> findProjectTemplateIn(views)).ifPresent(folder -> {
-			templateFolder = folder;
-			additions.addContributionItem(new Separator(), isVisibibleIfDiagramFolder);
+				var newProjectFromTemplate = new ActionContributionItem(
+						new NewProjectFromTemplateAction(templateFolder, currentFolder));
+				additions.addContributionItem(newProjectFromTemplate, null);
 
-			var newProjectFromTemplate = new ActionContributionItem(new NewProjectFromTemplateAction(templateFolder));
-			additions.addContributionItem(newProjectFromTemplate, isVisibibleIfDiagramFolder);
+				templateFolder.getElements().forEach(o -> {
+					if (o instanceof IDiagramModel) {
+						IDiagramModel diagramTemplate = (IDiagramModel) o;
 
-			if (templateFolder == null) {
-				return;
-			}
-
-			templateFolder.getElements().forEach(o -> {
-				if (o instanceof IDiagramModel) {
-					IDiagramModel diagramTemplate = (IDiagramModel) o;
-
-					var newViewFromTemplate = new ActionContributionItem(
-							new NewViewFromTemplateAction(diagramTemplate));
-					additions.addContributionItem(newViewFromTemplate, isVisibibleIfDiagramFolder);
-				}
+						var newViewFromTemplate = new ActionContributionItem(
+								new NewViewFromTemplateAction(diagramTemplate, currentFolder));
+						additions.addContributionItem(newViewFromTemplate, null);
+					}
+				});
 			});
 		});
 
@@ -78,9 +62,11 @@ public class ProjectCreationMenuExtensionContributionFactory extends ExtensionCo
 
 	private class NewProjectFromTemplateAction extends Action {
 		private final IFolder templateFolder;
+		private final IFolder parentFolder;
 
-		NewProjectFromTemplateAction(IFolder templateFolder) {
+		NewProjectFromTemplateAction(IFolder templateFolder, IFolder parentFolder) {
 			this.templateFolder = templateFolder;
+			this.parentFolder = parentFolder;
 		}
 
 		@Override
@@ -92,9 +78,9 @@ public class ProjectCreationMenuExtensionContributionFactory extends ExtensionCo
 		public void run() {
 			var templatePropertyKeys = propertyKeysOf(templateFolder);
 
-			Command cmd = CreateNewProject.from(fCurrentFolder, new ProjectDefinition("Dummy",
+			Command cmd = CreateNewProject.from(parentFolder, new ProjectDefinition("Dummy",
 					templatePropertyKeys.stream().collect(Collectors.toMap(k -> k, k -> ""))));
-			CommandStack commandStack = (CommandStack) fCurrentFolder.getAdapter(CommandStack.class);
+			CommandStack commandStack = (CommandStack) parentFolder.getAdapter(CommandStack.class);
 			commandStack.execute(cmd);
 
 		}
@@ -112,9 +98,11 @@ public class ProjectCreationMenuExtensionContributionFactory extends ExtensionCo
 
 	private class NewViewFromTemplateAction extends Action {
 		private final IDiagramModel templateDiagram;
+		private final IFolder parentFolder;
 
-		NewViewFromTemplateAction(IDiagramModel templateDiagram) {
+		NewViewFromTemplateAction(IDiagramModel templateDiagram, IFolder parentFolder) {
 			this.templateDiagram = templateDiagram;
+			this.parentFolder = parentFolder;
 		}
 
 		@Override
@@ -126,9 +114,9 @@ public class ProjectCreationMenuExtensionContributionFactory extends ExtensionCo
 		public void run() {
 			var templatePropertyKeys = propertyKeysOf(templateDiagram);
 
-			Command cmd = CreateViewFromTemplate.from(fCurrentFolder, templateDiagram, new ViewDefinition("New View",
+			Command cmd = CreateViewFromTemplate.from(parentFolder, templateDiagram, new ViewDefinition("New View",
 					templatePropertyKeys.stream().collect(Collectors.toMap(k -> k, k -> ""))));
-			CommandStack commandStack = (CommandStack) fCurrentFolder.getAdapter(CommandStack.class);
+			CommandStack commandStack = (CommandStack) parentFolder.getAdapter(CommandStack.class);
 			commandStack.execute(cmd);
 
 		}
@@ -144,13 +132,6 @@ public class ProjectCreationMenuExtensionContributionFactory extends ExtensionCo
 		}
 	};
 
-	private Expression isVisibibleIfDiagramFolder = new Expression() {
-		@Override
-		public EvaluationResult evaluate(IEvaluationContext context) throws CoreException {
-			return fCurrentFolder != null ? EvaluationResult.TRUE : EvaluationResult.FALSE;
-		}
-	};
-
 	private Optional<IFolder> currentFolder(IStructuredSelection selection) {
 		var firstElement = selection.getFirstElement();
 
@@ -163,12 +144,8 @@ public class ProjectCreationMenuExtensionContributionFactory extends ExtensionCo
 		return Optional.empty();
 	}
 
-	private boolean isNonEmptyList(Object o) {
-		return o instanceof List<?> && ((List<?>) o).size() > 0;
-	}
-
-	private Optional<IFolder> findViewFolder() {
-		return Optional.ofNullable(fCurrentFolder).map(f -> {
+	private Optional<IFolder> findViewFolder(IFolder selectedFolder) {
+		return Optional.ofNullable(selectedFolder).map(f -> {
 			var currentFolder = f;
 			while (!FolderType.DIAGRAMS.equals(currentFolder.getType())) {
 				currentFolder = (IFolder) currentFolder.eContainer();
