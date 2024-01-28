@@ -35,20 +35,29 @@ import com.archiplugin.projectcreator.project.ProjectDefinition;
 public class ProjectCreationMenuExtensionContributionFactory extends ExtensionContributionFactory {
 
 	private IFolder fCurrentFolder;
-	private Optional<IFolder> viewsFolder;
 
 	public ProjectCreationMenuExtensionContributionFactory() {
 	}
 
 	@Override
 	public void createContributionItems(IServiceLocator serviceLocator, IContributionRoot additions) {
-		additions.addContributionItem(new Separator(), isVisibibleIfDiagramFolder);
+		findViewFolder().ifPresent(views -> {
+			findProjectTemplateIn(views).ifPresent(template -> {
+				additions.addContributionItem(new Separator(), isVisibibleIfDiagramFolder);
 
-		var newProjectFromTemplate = new ActionContributionItem(new NewProjectFromTemplateAction());
-		additions.addContributionItem(newProjectFromTemplate, isVisibibleIfDiagramFolder);
+				var newProjectFromTemplate = new ActionContributionItem(new NewProjectFromTemplateAction(template));
+				additions.addContributionItem(newProjectFromTemplate, isVisibibleIfDiagramFolder);
+			});
+		});
 	}
 
 	private class NewProjectFromTemplateAction extends Action {
+		private final IFolder templateFolder;
+
+		NewProjectFromTemplateAction(IFolder templateFolder) {
+			this.templateFolder = templateFolder;
+		}
+
 		@Override
 		public String getText() {
 			return Messages.NewProjectFromTemplateMenuEntry;
@@ -56,17 +65,12 @@ public class ProjectCreationMenuExtensionContributionFactory extends ExtensionCo
 
 		@Override
 		public void run() {
-			findViewFolder().ifPresent(views -> {
-				findProjectTemplateIn(views).ifPresent(template -> {
-					var templatePropertyKeys = propertyKeysOf(template);
-					// Execute Command
-					Command cmd = CreateNewProject.from(fCurrentFolder, new ProjectDefinition("Dummy",
-							templatePropertyKeys.stream().collect(Collectors.toMap(k -> k, k -> ""))));
-					CommandStack commandStack = (CommandStack) fCurrentFolder.getAdapter(CommandStack.class);
-					commandStack.execute(cmd);
-				});
+			var templatePropertyKeys = propertyKeysOf(templateFolder);
 
-			});
+			Command cmd = CreateNewProject.from(fCurrentFolder, new ProjectDefinition("Dummy",
+					templatePropertyKeys.stream().collect(Collectors.toMap(k -> k, k -> ""))));
+			CommandStack commandStack = (CommandStack) fCurrentFolder.getAdapter(CommandStack.class);
+			commandStack.execute(cmd);
 
 		}
 
@@ -127,8 +131,8 @@ public class ProjectCreationMenuExtensionContributionFactory extends ExtensionCo
 		var templateFolderId = Activator.INSTANCE.getPreferenceStore()
 				.getString(ProjectCreatorPreferenceConstants.PROJECT_CREATION_TEMPLATE_FOLDER);
 
-		for (Iterator iterator = viewsFolder.getFolders().iterator(); iterator.hasNext();) {
-			IFolder f = (IFolder) iterator.next();
+		for (Iterator<IFolder> iterator = viewsFolder.getFolders().iterator(); iterator.hasNext();) {
+			IFolder f = iterator.next();
 
 			if (f.getId().equals(templateFolderId)) {
 				return Optional.of(f);
