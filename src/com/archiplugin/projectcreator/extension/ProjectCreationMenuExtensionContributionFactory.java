@@ -20,7 +20,8 @@ import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.ActionContributionItem;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.ui.contexts.IContextService;
+import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.ui.ISelectionService;
 import org.eclipse.ui.menus.ExtensionContributionFactory;
 import org.eclipse.ui.menus.IContributionRoot;
 import org.eclipse.ui.services.IServiceLocator;
@@ -46,25 +47,31 @@ public class ProjectCreationMenuExtensionContributionFactory extends ExtensionCo
 
 	@Override
 	public void createContributionItems(IServiceLocator serviceLocator, IContributionRoot additions) {
-		var contextService = serviceLocator.getService(IContextService.class);
-		var context = contextService.getContext(getLocation());
+		var selectionService = serviceLocator.getService(ISelectionService.class);
+		var selection = (IStructuredSelection) selectionService.getSelection();
 
-		additions.addContributionItem(new Separator(), isVisibibleIfDiagramFolder);
+		fCurrentFolder = currentFolder(selection).orElse(null);
 
-		var newProjectFromTemplate = new ActionContributionItem(new NewProjectFromTemplateAction(templateFolder));
-		additions.addContributionItem(newProjectFromTemplate, isVisibibleIfDiagramFolder);
+		findViewFolder().flatMap(views -> findProjectTemplateIn(views)).ifPresent(folder -> {
+			templateFolder = folder;
+			additions.addContributionItem(new Separator(), isVisibibleIfDiagramFolder);
 
-		if (templateFolder == null) {
-			return;
-		}
+			var newProjectFromTemplate = new ActionContributionItem(new NewProjectFromTemplateAction(templateFolder));
+			additions.addContributionItem(newProjectFromTemplate, isVisibibleIfDiagramFolder);
 
-		templateFolder.getElements().forEach(o -> {
-			if (o instanceof IDiagramModel) {
-				IDiagramModel diagramTemplate = (IDiagramModel) o;
-
-				var newViewFromTemplate = new ActionContributionItem(new NewViewFromTemplateAction(diagramTemplate));
-				additions.addContributionItem(newViewFromTemplate, isVisibibleIfDiagramFolder);
+			if (templateFolder == null) {
+				return;
 			}
+
+			templateFolder.getElements().forEach(o -> {
+				if (o instanceof IDiagramModel) {
+					IDiagramModel diagramTemplate = (IDiagramModel) o;
+
+					var newViewFromTemplate = new ActionContributionItem(
+							new NewViewFromTemplateAction(diagramTemplate));
+					additions.addContributionItem(newViewFromTemplate, isVisibibleIfDiagramFolder);
+				}
+			});
 		});
 
 	}
@@ -112,7 +119,7 @@ public class ProjectCreationMenuExtensionContributionFactory extends ExtensionCo
 
 		@Override
 		public String getText() {
-			return Messages.NewViewFromTemplateMenuEntry;
+			return Messages.NewViewFromTemplateMenuEntry + ": " + templateDiagram.getName();
 		}
 
 		@Override
@@ -140,31 +147,25 @@ public class ProjectCreationMenuExtensionContributionFactory extends ExtensionCo
 	private Expression isVisibibleIfDiagramFolder = new Expression() {
 		@Override
 		public EvaluationResult evaluate(IEvaluationContext context) throws CoreException {
-			Object defaultVariable = context.getDefaultVariable();
-
-			fCurrentFolder = null;
-
-			if (!isNonEmptyList(defaultVariable)) {
-				return EvaluationResult.FALSE;
-			}
-
-			Object firstElement = ((List<?>) defaultVariable).get(0);
-
-			if (firstElement instanceof IFolder && isInDiagramFolder((IFolder) firstElement)) {
-				fCurrentFolder = (IFolder) defaultVariable;
-			} else if (firstElement instanceof IDiagramModel) {
-				fCurrentFolder = (IFolder) ((IDiagramModel) firstElement).eContainer();
-			}
-
-			templateFolder = findViewFolder().flatMap(views -> findProjectTemplateIn(views)).orElse(null);
-
-			return fCurrentFolder != null && templateFolder != null ? EvaluationResult.TRUE : EvaluationResult.FALSE;
-		}
-
-		private boolean isNonEmptyList(Object o) {
-			return o instanceof List<?> && ((List<?>) o).size() > 0;
+			return fCurrentFolder != null ? EvaluationResult.TRUE : EvaluationResult.FALSE;
 		}
 	};
+
+	private Optional<IFolder> currentFolder(IStructuredSelection selection) {
+		var firstElement = selection.getFirstElement();
+
+		if (firstElement instanceof IFolder && isInDiagramFolder((IFolder) firstElement)) {
+			return Optional.of((IFolder) firstElement);
+		} else if (firstElement instanceof IDiagramModel) {
+			return Optional.of((IFolder) ((IDiagramModel) firstElement).eContainer());
+		}
+
+		return Optional.empty();
+	}
+
+	private boolean isNonEmptyList(Object o) {
+		return o instanceof List<?> && ((List<?>) o).size() > 0;
+	}
 
 	private Optional<IFolder> findViewFolder() {
 		return Optional.ofNullable(fCurrentFolder).map(f -> {
