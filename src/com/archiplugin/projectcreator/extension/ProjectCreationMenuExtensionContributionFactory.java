@@ -124,7 +124,7 @@ public class ProjectCreationMenuExtensionContributionFactory extends ExtensionCo
 
 		@Override
 		public ImageDescriptor getImageDescriptor() {
-			return Images.projectImage();
+			return Images.viewImage();
 		}
 	};
 
