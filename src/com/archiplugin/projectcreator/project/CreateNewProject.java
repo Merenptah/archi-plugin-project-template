@@ -4,6 +4,10 @@ import java.util.Map.Entry;
 import java.util.Optional;
 
 import org.eclipse.gef.commands.Command;
+import org.eclipse.jface.window.Window;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PlatformUI;
 
 import com.archimatetool.model.FolderType;
 import com.archimatetool.model.IArchimateFactory;
@@ -42,11 +46,17 @@ public class CreateNewProject extends Command {
 	}
 
 	private void createFolder() {
-		IFolder newFolder = IArchimateFactory.eINSTANCE.createFolder();
+		IWorkbenchWindow activeWindow = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+		Shell shell = (activeWindow != null) ? activeWindow.getShell() : null;
+		var creationPopup = new ProjectDefinitionDialog(shell);
+		if (creationPopup.open() == Window.OK) {
+			IFolder newFolder = IArchimateFactory.eINSTANCE.createFolder();
 
-		parentFolder.getFolders().add(configured(newFolder));
+			parentFolder.getFolders().add(configured(newFolder));
 
-		this.newFolder = newFolder;
+			this.newFolder = newFolder;
+		}
+
 	}
 
 	private IFolder configured(IFolder newFolder) {
