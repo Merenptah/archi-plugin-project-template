@@ -139,7 +139,7 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 			return e.getValue().stream().filter(v -> v.getType().equals(FolderType.DIAGRAMS)).flatMap(
 					v -> dive(v.getFolders().stream().collect(Collectors.toMap(f -> f.getName(), Function.identity())))
 							.entrySet().stream().map(d -> new ModelViewFolder(e.getKey(), d.getKey(), d.getValue())));
-		}).toList();
+		}).collect(Collectors.toList());
 	}
 
 	private Map<String, IFolder> dive(Map<String, IFolder> pathsToFolders) {
@@ -162,7 +162,29 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 		return result;
 	}
 
-	private static record ModelViewFolder(String modelname, String folderPath, IFolder folder) {
+	private static class ModelViewFolder {
+		private final String modelname;
+		private final String folderPath;
+		private final IFolder folder;
+
+		ModelViewFolder(String modelname, String folderPath, IFolder folder) {
+			this.modelname = modelname;
+			this.folderPath = folderPath;
+			this.folder = folder;
+		}
+
+		public String modelname() {
+			return modelname;
+		}
+
+		public String folderPath() {
+			return folderPath;
+		}
+
+		public IFolder folder() {
+			return folder;
+		}
+
 	};
 
 	@Override

@@ -3,9 +3,9 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Create projects as folders with properties and views
 Bundle-SymbolicName: com.archiplugin.projectcreator;singleton:=true
 Bundle-Version: 1.0.0.qualifier
-Bundle-Vendor: Hannes Gerner
+Bundle-Vendor: Merenptah
 Bundle-Localization: plugin
-Bundle-RequiredExecutionEnvironment: JavaSE-17
+Bundle-RequiredExecutionEnvironment: JavaSE-11
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
  com.archimatetool.editor,
