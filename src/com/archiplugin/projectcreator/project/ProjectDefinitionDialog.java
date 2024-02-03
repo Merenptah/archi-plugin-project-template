@@ -1,42 +1,86 @@
 package com.archiplugin.projectcreator.project;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Text;
 
 public class ProjectDefinitionDialog extends Dialog {
+	private Map<String, Text> inputFields = new HashMap<String, Text>();
+	private Map<String, String> inputFieldValues = new HashMap<String, String>();
 
 	public ProjectDefinitionDialog(Shell parentShell) {
 		super(parentShell);
 	}
 
+	public Map<String, String> getInputFieldValues() {
+		return inputFieldValues;
+	}
+
 	@Override
 	protected void configureShell(Shell shell) {
 		super.configureShell(shell);
-		shell.setText("Test Popup");
+		shell.setText("Project Definition");
 	}
 
 	@Override
 	protected Control createDialogArea(Composite parent) {
-		Composite composite = (Composite) super.createDialogArea(parent);
-		Label label = new Label(composite, SWT.WRAP);
-		label.setText("This is a test");
-		GridData data = new GridData(GridData.GRAB_HORIZONTAL | GridData.GRAB_VERTICAL | GridData.HORIZONTAL_ALIGN_FILL
-				| GridData.VERTICAL_ALIGN_CENTER);
-		data.widthHint = convertHorizontalDLUsToPixels(IDialogConstants.MINIMUM_MESSAGE_AREA_WIDTH);
+		Composite twoColumnArea = createTwoColumnArea(parent);
+
+		addRowWith(twoColumnArea, "This is a test");
+		addRowWith(twoColumnArea, "Next value");
+		addRowWith(twoColumnArea, "Third value");
+
+		return twoColumnArea;
+	}
+
+	private void addRowWith(Composite twoColumnArea, String labelText) {
+		Label label = new Label(twoColumnArea, SWT.None);
+		label.setText(labelText);
+		GridData data = new GridData(SWT.BEGINNING, SWT.CENTER, false, false);
 		label.setLayoutData(data);
-		label.setFont(parent.getFont());
+
+		var inputField = new Text(twoColumnArea, getInputTextStyle());
+		var inputFieldLayout = new GridData(SWT.FILL, SWT.CENTER, true, false);
+		inputField.setLayoutData(inputFieldLayout);
+
+		inputFields.put(labelText, inputField);
+	}
+
+	private Composite createTwoColumnArea(Composite parent) {
+		Composite composite = (Composite) super.createDialogArea(parent);
+		composite.setLayout(new GridLayout(2, false));
 		return composite;
+	}
+
+	protected int getInputTextStyle() {
+		return SWT.SINGLE | SWT.BORDER;
 	}
 
 	@Override
 	protected void createButtonsForButtonBar(Composite parent) {
 		createButton(parent, IDialogConstants.OK_ID, IDialogConstants.OK_LABEL, true);
 		createButton(parent, IDialogConstants.CANCEL_ID, IDialogConstants.CANCEL_LABEL, false);
+	}
+
+	@Override
+	protected void buttonPressed(int buttonId) {
+		if (buttonId == IDialogConstants.OK_ID) {
+			inputFieldValues = inputFields.entrySet().stream()
+					.collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue().getText()));
+		} else {
+			inputFieldValues = null;
+		}
+		super.buttonPressed(buttonId);
 	}
 }
