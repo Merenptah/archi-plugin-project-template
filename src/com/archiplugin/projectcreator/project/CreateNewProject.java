@@ -46,9 +46,7 @@ public class CreateNewProject extends Command {
 	}
 
 	private void createFolder() {
-		IWorkbenchWindow activeWindow = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-		Shell shell = (activeWindow != null) ? activeWindow.getShell() : null;
-		var creationPopup = new ProjectDefinitionDialog(shell, projectTemplateDefinition);
+		var creationPopup = new ProjectDefinitionDialog(shell(), projectTemplateDefinition);
 		if (creationPopup.open() == Window.OK) {
 			IFolder newFolder = IArchimateFactory.eINSTANCE.createFolder();
 
@@ -57,6 +55,12 @@ public class CreateNewProject extends Command {
 			this.newFolder = newFolder;
 		}
 
+	}
+
+	private Shell shell() {
+		IWorkbenchWindow activeWindow = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+		Shell shell = (activeWindow != null) ? activeWindow.getShell() : null;
+		return shell;
 	}
 
 	private IFolder configured(IFolder newFolder, ProjectDefinition projectDefinition) {

@@ -1,7 +1,7 @@
 package com.archiplugin.projectcreator.extension;
 
 import java.util.Iterator;
-import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -76,10 +76,8 @@ public class ProjectCreationMenuExtensionContributionFactory extends ExtensionCo
 
 		@Override
 		public void run() {
-			var templatePropertyKeys = propertyKeysOf(templateFolder);
-
-			Command cmd = CreateNewProject.from(parentFolder, new ProjectTemplateDefinition(
-					templatePropertyKeys.stream().collect(Collectors.toMap(k -> k, k -> ""))));
+			Command cmd = CreateNewProject.from(parentFolder,
+					new ProjectTemplateDefinition(propertiesOf(templateFolder)));
 			CommandStack commandStack = (CommandStack) parentFolder.getAdapter(CommandStack.class);
 			commandStack.execute(cmd);
 
@@ -112,10 +110,8 @@ public class ProjectCreationMenuExtensionContributionFactory extends ExtensionCo
 
 		@Override
 		public void run() {
-			var templatePropertyKeys = propertyKeysOf(templateDiagram);
-
-			Command cmd = CreateViewFromTemplate.from(parentFolder, templateDiagram, new ViewDefinition("New View",
-					templatePropertyKeys.stream().collect(Collectors.toMap(k -> k, k -> ""))));
+			Command cmd = CreateViewFromTemplate.from(parentFolder, templateDiagram,
+					new ViewDefinition("New View", propertiesOf(templateDiagram)));
 			CommandStack commandStack = (CommandStack) parentFolder.getAdapter(CommandStack.class);
 			commandStack.execute(cmd);
 
@@ -155,8 +151,8 @@ public class ProjectCreationMenuExtensionContributionFactory extends ExtensionCo
 		});
 	}
 
-	public List<String> propertyKeysOf(IProperties template) {
-		return template.getProperties().stream().map(p -> p.getKey()).toList();
+	public Map<String, String> propertiesOf(IProperties template) {
+		return template.getProperties().stream().collect(Collectors.toMap(p -> p.getKey(), p -> p.getValue()));
 	}
 
 	private Optional<IFolder> findProjectTemplateIn(IFolder viewsFolder) {

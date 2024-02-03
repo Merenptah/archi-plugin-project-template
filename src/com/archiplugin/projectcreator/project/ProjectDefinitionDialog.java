@@ -30,7 +30,7 @@ public class ProjectDefinitionDialog extends Dialog {
 	}
 
 	public ProjectDefinition projectDefinition() {
-		return new ProjectDefinition("Dummy", inputFieldValues);
+		return new ProjectDefinition(projectTemplateDefinition, inputFieldValues);
 	}
 
 	@Override
@@ -43,12 +43,13 @@ public class ProjectDefinitionDialog extends Dialog {
 	protected Control createDialogArea(Composite parent) {
 		Composite twoColumnArea = createTwoColumnArea(parent);
 
-		projectTemplateDefinition.properties().forEach((label, defaultValue) -> addRowWith(twoColumnArea, label));
+		projectTemplateDefinition.properties()
+				.forEach((label, defaultValue) -> addRowWith(twoColumnArea, label, defaultValue));
 
 		return twoColumnArea;
 	}
 
-	private void addRowWith(Composite twoColumnArea, String labelText) {
+	private void addRowWith(Composite twoColumnArea, String labelText, String defaultValue) {
 		Label label = new Label(twoColumnArea, SWT.None);
 		label.setText(labelText);
 		GridData data = new GridData(SWT.BEGINNING, SWT.CENTER, false, false);
@@ -57,6 +58,7 @@ public class ProjectDefinitionDialog extends Dialog {
 		var inputField = new Text(twoColumnArea, getInputTextStyle());
 		var inputFieldLayout = new GridData(SWT.FILL, SWT.CENTER, true, false);
 		inputField.setLayoutData(inputFieldLayout);
+		inputField.setText(defaultValue);
 
 		inputFields.put(labelText, inputField);
 	}
