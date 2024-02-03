@@ -25,7 +25,7 @@ import com.archiplugin.projectcreator.Activator;
 import com.archiplugin.projectcreator.preferences.ProjectCreatorPreferenceConstants;
 import com.archiplugin.projectcreator.project.CreateNewProject;
 import com.archiplugin.projectcreator.project.CreateViewFromTemplate;
-import com.archiplugin.projectcreator.project.ProjectDefinition;
+import com.archiplugin.projectcreator.project.ProjectTemplateDefinition;
 import com.archiplugin.projectcreator.project.ViewDefinition;
 
 public class ProjectCreationMenuExtensionContributionFactory extends ExtensionContributionFactory {
@@ -78,7 +78,7 @@ public class ProjectCreationMenuExtensionContributionFactory extends ExtensionCo
 		public void run() {
 			var templatePropertyKeys = propertyKeysOf(templateFolder);
 
-			Command cmd = CreateNewProject.from(parentFolder, new ProjectDefinition("Dummy",
+			Command cmd = CreateNewProject.from(parentFolder, new ProjectTemplateDefinition(
 					templatePropertyKeys.stream().collect(Collectors.toMap(k -> k, k -> ""))));
 			CommandStack commandStack = (CommandStack) parentFolder.getAdapter(CommandStack.class);
 			commandStack.execute(cmd);

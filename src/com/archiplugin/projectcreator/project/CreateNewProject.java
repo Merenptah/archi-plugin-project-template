@@ -17,17 +17,17 @@ import com.archimatetool.model.IProperty;
 public class CreateNewProject extends Command {
 
 	private final IFolder parentFolder;
-	private final ProjectDefinition projectDefinition;
+	private final ProjectTemplateDefinition projectTemplateDefinition;
 	private IFolder newFolder;
 
-	private CreateNewProject(IFolder parentFolder, ProjectDefinition projectDefinition) {
+	private CreateNewProject(IFolder parentFolder, ProjectTemplateDefinition projectTemplateDefinition) {
 		super();
 		this.parentFolder = parentFolder;
-		this.projectDefinition = projectDefinition;
+		this.projectTemplateDefinition = projectTemplateDefinition;
 	}
 
-	public static CreateNewProject from(IFolder parent, ProjectDefinition projectDefinition) {
-		return new CreateNewProject(parent, projectDefinition);
+	public static CreateNewProject from(IFolder parent, ProjectTemplateDefinition projectTemplateDefinition) {
+		return new CreateNewProject(parent, projectTemplateDefinition);
 	}
 
 	@Override
@@ -48,18 +48,18 @@ public class CreateNewProject extends Command {
 	private void createFolder() {
 		IWorkbenchWindow activeWindow = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 		Shell shell = (activeWindow != null) ? activeWindow.getShell() : null;
-		var creationPopup = new ProjectDefinitionDialog(shell);
+		var creationPopup = new ProjectDefinitionDialog(shell, projectTemplateDefinition);
 		if (creationPopup.open() == Window.OK) {
 			IFolder newFolder = IArchimateFactory.eINSTANCE.createFolder();
 
-			parentFolder.getFolders().add(configured(newFolder));
+			parentFolder.getFolders().add(configured(newFolder, creationPopup.projectDefinition()));
 
 			this.newFolder = newFolder;
 		}
 
 	}
 
-	private IFolder configured(IFolder newFolder) {
+	private IFolder configured(IFolder newFolder, ProjectDefinition projectDefinition) {
 		newFolder.setName(projectDefinition.name());
 		newFolder.setType(FolderType.USER);
 

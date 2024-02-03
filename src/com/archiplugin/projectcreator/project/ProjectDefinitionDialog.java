@@ -16,15 +16,21 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
 public class ProjectDefinitionDialog extends Dialog {
+	private final ProjectTemplateDefinition projectTemplateDefinition;
 	private Map<String, Text> inputFields = new HashMap<String, Text>();
 	private Map<String, String> inputFieldValues = new HashMap<String, String>();
 
-	public ProjectDefinitionDialog(Shell parentShell) {
+	public ProjectDefinitionDialog(Shell parentShell, ProjectTemplateDefinition projectTemplateDefinition) {
 		super(parentShell);
+		this.projectTemplateDefinition = projectTemplateDefinition;
 	}
 
 	public Map<String, String> getInputFieldValues() {
 		return inputFieldValues;
+	}
+
+	public ProjectDefinition projectDefinition() {
+		return new ProjectDefinition("Dummy", inputFieldValues);
 	}
 
 	@Override
@@ -37,9 +43,7 @@ public class ProjectDefinitionDialog extends Dialog {
 	protected Control createDialogArea(Composite parent) {
 		Composite twoColumnArea = createTwoColumnArea(parent);
 
-		addRowWith(twoColumnArea, "This is a test");
-		addRowWith(twoColumnArea, "Next value");
-		addRowWith(twoColumnArea, "Third value");
+		projectTemplateDefinition.properties().forEach((label, defaultValue) -> addRowWith(twoColumnArea, label));
 
 		return twoColumnArea;
 	}
