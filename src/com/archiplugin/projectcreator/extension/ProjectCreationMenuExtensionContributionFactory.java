@@ -26,7 +26,7 @@ import com.archiplugin.projectcreator.preferences.ProjectCreatorPreferenceConsta
 import com.archiplugin.projectcreator.project.CreateNewProject;
 import com.archiplugin.projectcreator.project.CreateViewFromTemplate;
 import com.archiplugin.projectcreator.project.ProjectTemplateDefinition;
-import com.archiplugin.projectcreator.project.ViewDefinition;
+import com.archiplugin.projectcreator.project.ViewTemplateDefinition;
 
 public class ProjectCreationMenuExtensionContributionFactory extends ExtensionContributionFactory {
 
@@ -111,7 +111,7 @@ public class ProjectCreationMenuExtensionContributionFactory extends ExtensionCo
 		@Override
 		public void run() {
 			Command cmd = CreateViewFromTemplate.from(parentFolder, templateDiagram,
-					new ViewDefinition("New View", propertiesOf(templateDiagram)));
+					new ViewTemplateDefinition(propertiesOf(templateDiagram)));
 			CommandStack commandStack = (CommandStack) parentFolder.getAdapter(CommandStack.class);
 			commandStack.execute(cmd);
 
