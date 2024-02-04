@@ -64,14 +64,13 @@ public class CreateNewProject extends Command {
 	}
 
 	private IFolder configured(IFolder newFolder, ProjectDefinition projectDefinition) {
-		newFolder.setName(projectDefinition.name());
 		newFolder.setType(FolderType.USER);
 
-		projectDefinition.properties().entrySet().forEach(e -> {
+		projectDefinition.updatePropertiesAndName(p -> p.entrySet().forEach(e -> {
 			var prop = IArchimateFactory.eINSTANCE.createProperty();
 
 			newFolder.getProperties().add(configured(e, prop));
-		});
+		}), name -> newFolder.setName(name), newFolder);
 
 		return newFolder;
 	}

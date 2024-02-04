@@ -2,18 +2,17 @@ package com.archiplugin.projectcreator.project;
 
 import java.util.Map;
 import java.util.Optional;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import com.archimatetool.editor.ui.textrender.TextRenderer;
+import com.archimatetool.model.IArchimateModelObject;
 
 public record ProjectTemplateDefinition(Map<String, String> properties) {
 	private final static String NAME_TEMPLATE_FIELD = "_NAME_TEMPLATE";
 
-	public String resolveName(ProjectDefinition projectDefinition) {
+	public String resolveName(ProjectDefinition projectDefinition, IArchimateModelObject object) {
 		return Optional.ofNullable(properties.get(NAME_TEMPLATE_FIELD)).map(nameTemplate -> {
-			var toBeReplaced = Pattern.compile("\\$\\{([^\\}]+)\\}");
-			return toBeReplaced.matcher(nameTemplate).replaceAll(r -> {
-				return projectDefinition.properties().get(r.group(1));
-			});
+			return TextRenderer.getDefault().renderWithExpression(object, nameTemplate);
 		}).orElse("Dummy");
 	}
 
