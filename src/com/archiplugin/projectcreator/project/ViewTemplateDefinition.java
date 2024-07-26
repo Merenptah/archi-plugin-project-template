@@ -10,10 +10,10 @@ import com.archimatetool.model.IArchimateModelObject;
 public record ViewTemplateDefinition(Map<String, String> properties) {
 	private final static String NAME_TEMPLATE_FIELD = "_NAME_TEMPLATE";
 
-	public String resolveName(ViewDefinition viewDefinition, IArchimateModelObject object) {
+	public String resolveName(ViewDefinition viewDefinition, IArchimateModelObject object, String defaultName) {
 		return Optional.ofNullable(properties.get(NAME_TEMPLATE_FIELD)).map(nameTemplate -> {
 			return TextRenderer.getDefault().renderWithExpression(object, nameTemplate);
-		}).orElse("Dummy");
+		}).orElse(defaultName);
 	}
 
 	public Map<String, String> properties() {

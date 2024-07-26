@@ -18,6 +18,6 @@ public class ViewDefinition {
 			IArchimateModelObject object) {
 
 		propertiesUpdater.accept(properties);
-		nameUpdater.accept(template.resolveName(this, object));
+		nameUpdater.accept(template.resolveName(this, object, "Dummy"));
 	}
 }

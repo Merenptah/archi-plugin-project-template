@@ -15,13 +15,13 @@ public class ProjectDefinition {
 	}
 
 	public String name(IArchimateModelObject object) {
-		return template.resolveName(this, object);
+		return template.resolveName(this, object, "Dummy");
 	}
 
 	public void updatePropertiesAndName(Consumer<Map<String, String>> propertiesUpdater, Consumer<String> nameUpdater,
 			IArchimateModelObject object) {
 
 		propertiesUpdater.accept(properties);
-		nameUpdater.accept(template.resolveName(this, object));
+		nameUpdater.accept(template.resolveName(this, object, "Dummy"));
 	}
 }
