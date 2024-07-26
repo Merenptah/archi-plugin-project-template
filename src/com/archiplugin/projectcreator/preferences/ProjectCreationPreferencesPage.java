@@ -3,6 +3,7 @@ package com.archiplugin.projectcreator.preferences;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -26,6 +27,7 @@ import org.eclipse.ui.IWorkbenchPreferencePage;
 
 import com.archimatetool.editor.model.IEditorModelManager;
 import com.archimatetool.model.FolderType;
+import com.archimatetool.model.IArchimateModel;
 import com.archimatetool.model.IFolder;
 import com.archiplugin.projectcreator.Activator;
 
@@ -122,6 +124,12 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 
 	private void setSelectionAndSelectableValuesOfTemplateSelector() {
 		var models = IEditorModelManager.INSTANCE.getModels();
+		
+		var dups = duplicateModelsIn(models);
+		if (!dups.isEmpty()) {
+			setErrorMessage("Cannot select templates, duplicate models: " + dups);
+			return;
+		};
 
 		Map<String, List<IFolder>> modelNameToTopLevelFolders = models.stream()
 				.collect(Collectors.toMap(m -> m.getName(), m -> m.getFolders()));
@@ -132,6 +140,16 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 		var templateFolder = getPreferenceStore().getString(PROJECT_CREATION_TEMPLATE_FOLDER);
 		selectableValues.stream().filter(f -> f.folder().getId().equals(templateFolder)).findFirst()
 				.ifPresent(s -> templateSelector.setSelection(new StructuredSelection(s)));
+	}
+	
+	private List<String> duplicateModelsIn(List<IArchimateModel> models) {
+		var modelAppearances = models.stream().collect(Collectors.groupingBy(e -> e.getName(), Collectors.counting()));
+		
+		return modelAppearances.entrySet().stream()
+				.filter(e -> e.getValue() > 1)
+				.map(e -> e.getKey())
+				.collect(Collectors.toList());
+	
 	}
 
 	private List<ModelViewFolder> flattenHierarchy(Map<String, List<IFolder>> input) {
