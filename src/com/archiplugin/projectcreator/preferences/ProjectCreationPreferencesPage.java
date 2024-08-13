@@ -3,7 +3,6 @@ package com.archiplugin.projectcreator.preferences;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -35,6 +34,7 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 		implements IWorkbenchPreferencePage, ProjectCreatorPreferenceConstants {
 
 	private ComboViewer templateSelector;
+	private ComboViewer firstLifeCycleToFolderSelector;
 
 	public ProjectCreationPreferencesPage() {
 		setPreferenceStore(Activator.INSTANCE.getPreferenceStore());
@@ -48,8 +48,13 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 
 		createLabelIn(settingsGroup, Messages.ProjectCreationPreferencesPage_TemplateFolder);
 
-		templateSelector = createTemplateSelectorIn(settingsGroup);
+		templateSelector = createPathSelectorIn(settingsGroup);
 		setSelectionAndSelectableValuesOfTemplateSelector();
+
+		Group lifecycleSettingsGroup = settingsGroupOn(page, "Lifecycle Settings");
+		createLabelIn(lifecycleSettingsGroup, "Folder");
+		firstLifeCycleToFolderSelector = createPathSelectorIn(lifecycleSettingsGroup);
+		setSelectionAndSelectableValuesOfLifecycleToFolderSelector();
 
 		return page;
 	}
@@ -59,7 +64,7 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 		label.setText(text);
 	}
 
-	private ComboViewer createTemplateSelectorIn(Group settingsGroup) {
+	private ComboViewer createPathSelectorIn(Group settingsGroup) {
 		var result = new ComboViewer(settingsGroup, SWT.READ_ONLY);
 
 		result.getCombo().setLayoutData(createHorizontalGridData(1));
@@ -124,12 +129,12 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 
 	private void setSelectionAndSelectableValuesOfTemplateSelector() {
 		var models = IEditorModelManager.INSTANCE.getModels();
-		
+
 		var dups = duplicateModelsIn(models);
 		if (!dups.isEmpty()) {
 			setErrorMessage("Cannot select templates, duplicate models: " + dups);
 			return;
-		};
+		}
 
 		Map<String, List<IFolder>> modelNameToTopLevelFolders = models.stream()
 				.collect(Collectors.toMap(m -> m.getName(), m -> m.getFolders()));
@@ -141,15 +146,33 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 		selectableValues.stream().filter(f -> f.folder().getId().equals(templateFolder)).findFirst()
 				.ifPresent(s -> templateSelector.setSelection(new StructuredSelection(s)));
 	}
-	
+
+	private void setSelectionAndSelectableValuesOfLifecycleToFolderSelector() {
+		var models = IEditorModelManager.INSTANCE.getModels();
+
+		var dups = duplicateModelsIn(models);
+		if (!dups.isEmpty()) {
+			setErrorMessage("Cannot select project lifecycle folder, duplicate models: " + dups);
+			return;
+		}
+
+		Map<String, List<IFolder>> modelNameToTopLevelFolders = models.stream()
+				.collect(Collectors.toMap(m -> m.getName(), m -> m.getFolders()));
+		var selectableValues = flattenHierarchy(modelNameToTopLevelFolders);
+
+		firstLifeCycleToFolderSelector.setInput(selectableValues.toArray());
+
+		var folder = getPreferenceStore().getString(PROJECT_LIFECYCLE_TO_FOLDER);
+		selectableValues.stream().filter(f -> f.folder().getId().equals(folder)).findFirst()
+				.ifPresent(s -> firstLifeCycleToFolderSelector.setSelection(new StructuredSelection(s)));
+	}
+
 	private List<String> duplicateModelsIn(List<IArchimateModel> models) {
 		var modelAppearances = models.stream().collect(Collectors.groupingBy(e -> e.getName(), Collectors.counting()));
-		
-		return modelAppearances.entrySet().stream()
-				.filter(e -> e.getValue() > 1)
-				.map(e -> e.getKey())
+
+		return modelAppearances.entrySet().stream().filter(e -> e.getValue() > 1).map(e -> e.getKey())
 				.collect(Collectors.toList());
-	
+
 	}
 
 	private List<ModelViewFolder> flattenHierarchy(Map<String, List<IFolder>> input) {
@@ -185,18 +208,27 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 
 	@Override
 	public boolean performOk() {
-		var selectedFolder = (ModelViewFolder) ((IStructuredSelection) templateSelector.getSelection())
+		var selectedTemplateFolder = (ModelViewFolder) ((IStructuredSelection) templateSelector.getSelection())
 				.getFirstElement();
-		getPreferenceStore().setValue(PROJECT_CREATION_TEMPLATE_FOLDER, selectedFolder.folder.getId());
+		getPreferenceStore().setValue(PROJECT_CREATION_TEMPLATE_FOLDER, selectedTemplateFolder.folder.getId());
+
+		var selectedFolder = (ModelViewFolder) ((IStructuredSelection) firstLifeCycleToFolderSelector.getSelection())
+				.getFirstElement();
+		getPreferenceStore().setValue(PROJECT_LIFECYCLE_TO_FOLDER, selectedFolder.folder.getId());
 		return true;
 	}
 
 	@Override
 	protected void performDefaults() {
 		var templateFolder = getPreferenceStore().getString(PROJECT_CREATION_TEMPLATE_FOLDER);
-		var input = (ModelViewFolder[]) templateSelector.getInput();
-		List.of(input).stream().filter(f -> f.folder().getId().equals(templateFolder)).findFirst()
+		var templateFolderInput = (ModelViewFolder[]) templateSelector.getInput();
+		List.of(templateFolderInput).stream().filter(f -> f.folder().getId().equals(templateFolder)).findFirst()
 				.ifPresent(s -> templateSelector.setSelection(new StructuredSelection(s)));
+
+		var lifecycleToFolder = getPreferenceStore().getString(PROJECT_CREATION_TEMPLATE_FOLDER);
+		var lifecycleToFolderInput = (ModelViewFolder[]) firstLifeCycleToFolderSelector.getInput();
+		List.of(lifecycleToFolderInput).stream().filter(f -> f.folder().getId().equals(lifecycleToFolder)).findFirst()
+				.ifPresent(s -> firstLifeCycleToFolderSelector.setSelection(new StructuredSelection(s)));
 
 		super.performDefaults();
 	}

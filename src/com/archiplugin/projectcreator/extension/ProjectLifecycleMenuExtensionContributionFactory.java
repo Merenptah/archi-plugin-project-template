@@ -1,5 +1,6 @@
 package com.archiplugin.projectcreator.extension;
 
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -19,6 +20,8 @@ import org.eclipse.ui.services.IServiceLocator;
 import com.archimatetool.model.FolderType;
 import com.archimatetool.model.IFolder;
 import com.archimatetool.model.IProperties;
+import com.archiplugin.projectcreator.Activator;
+import com.archiplugin.projectcreator.preferences.ProjectCreatorPreferenceConstants;
 import com.archiplugin.projectcreator.project.MoveProject;
 
 public class ProjectLifecycleMenuExtensionContributionFactory extends ExtensionContributionFactory {
@@ -32,11 +35,11 @@ public class ProjectLifecycleMenuExtensionContributionFactory extends ExtensionC
 		var selection = (IStructuredSelection) selectionService.getSelection();
 
 		currentFolder(selection).ifPresent(currentFolder -> {
-			findViewsFolder(currentFolder).ifPresent(viewsFolder -> {
+			findViewsFolder(currentFolder).flatMap(views -> findTargetFolderIn(views)).ifPresent(targetFolder -> {
 				additions.addContributionItem(new Separator(), null);
 
 				var moveProjectToNextStage = new ActionContributionItem(
-						new MoveProjectToNextStageAction(viewsFolder, currentFolder));
+						new MoveProjectToNextStageAction(targetFolder, currentFolder));
 				additions.addContributionItem(moveProjectToNextStage, null);
 			});
 
@@ -108,6 +111,27 @@ public class ProjectLifecycleMenuExtensionContributionFactory extends ExtensionC
 			if (folderIterator.getType() == FolderType.DIAGRAMS) {
 				return Optional.of(folderIterator);
 			}
+		}
+
+		return Optional.empty();
+	}
+
+	private Optional<IFolder> findTargetFolderIn(IFolder viewsFolder) {
+		var folderId = Activator.INSTANCE.getPreferenceStore()
+				.getString(ProjectCreatorPreferenceConstants.PROJECT_LIFECYCLE_TO_FOLDER);
+
+		for (Iterator<IFolder> iterator = viewsFolder.getFolders().iterator(); iterator.hasNext();) {
+			IFolder f = iterator.next();
+
+			if (f.getId().equals(folderId)) {
+				return Optional.of(f);
+			}
+
+			var intermediateResult = findTargetFolderIn(f);
+			if (intermediateResult.isPresent()) {
+				return intermediateResult;
+			}
+
 		}
 
 		return Optional.empty();

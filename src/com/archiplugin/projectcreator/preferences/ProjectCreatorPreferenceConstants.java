@@ -8,5 +8,6 @@ package com.archiplugin.projectcreator.preferences;
 public interface ProjectCreatorPreferenceConstants {
 
 	String PROJECT_CREATION_TEMPLATE_FOLDER = "ProjectCreationTemplateFolder"; //$NON-NLS-1$
+	String PROJECT_LIFECYCLE_TO_FOLDER = "ProjectLifeCycleToFolder"; //$NON-NLS-1$
 
 }
