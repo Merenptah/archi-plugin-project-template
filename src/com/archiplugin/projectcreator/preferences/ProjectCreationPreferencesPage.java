@@ -34,6 +34,7 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 		implements IWorkbenchPreferencePage, ProjectCreatorPreferenceConstants {
 
 	private ComboViewer templateSelector;
+	private ComboViewer firstLifeCycleFromFolderSelector;
 	private ComboViewer firstLifeCycleToFolderSelector;
 
 	public ProjectCreationPreferencesPage() {
@@ -44,15 +45,19 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 	protected Control createContents(Composite parent) {
 		Composite page = createPage(parent);
 
-		Group settingsGroup = settingsGroupOn(page, Messages.ProjectCreationPreferencesPage_Settings);
+		Group settingsGroup = settingsGroupOn(page, Messages.ProjectCreationPreferencesPage_Template_Settings);
 
-		createLabelIn(settingsGroup, Messages.ProjectCreationPreferencesPage_TemplateFolder);
+		createLabelIn(settingsGroup, Messages.ProjectCreationPreferencesPage_Template_Folder);
 
 		templateSelector = createPathSelectorIn(settingsGroup);
 		setSelectionAndSelectableValuesOfTemplateSelector();
 
-		Group lifecycleSettingsGroup = settingsGroupOn(page, "Lifecycle Settings");
-		createLabelIn(lifecycleSettingsGroup, "Folder");
+		Group lifecycleSettingsGroup = settingsGroupOn(page,
+				Messages.ProjectCreationPreferencesPage_Lifecycle_Settings);
+		createLabelIn(lifecycleSettingsGroup, Messages.ProjectCreationPreferencesPage_Lifecycle_FromFolder);
+		firstLifeCycleFromFolderSelector = createPathSelectorIn(lifecycleSettingsGroup);
+		setSelectionAndSelectableValuesOfLifecycleFromFolderSelector();
+		createLabelIn(lifecycleSettingsGroup, Messages.ProjectCreationPreferencesPage_Lifecycle_ToFolder);
 		firstLifeCycleToFolderSelector = createPathSelectorIn(lifecycleSettingsGroup);
 		setSelectionAndSelectableValuesOfLifecycleToFolderSelector();
 
@@ -100,7 +105,7 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 	private Group settingsGroupOn(Composite page, String groupName) {
 		Group settingsGroup = new Group(page, SWT.NULL);
 		settingsGroup.setText(groupName);
-		settingsGroup.setLayout(new GridLayout(3, false));
+		settingsGroup.setLayout(new GridLayout(2, false));
 
 		GridData gd = new GridData(GridData.FILL_HORIZONTAL);
 		gd.widthHint = 500;
@@ -147,6 +152,26 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 				.ifPresent(s -> templateSelector.setSelection(new StructuredSelection(s)));
 	}
 
+	private void setSelectionAndSelectableValuesOfLifecycleFromFolderSelector() {
+		var models = IEditorModelManager.INSTANCE.getModels();
+
+		var dups = duplicateModelsIn(models);
+		if (!dups.isEmpty()) {
+			setErrorMessage("Cannot select project lifecycle folder, duplicate models: " + dups);
+			return;
+		}
+
+		Map<String, List<IFolder>> modelNameToTopLevelFolders = models.stream()
+				.collect(Collectors.toMap(m -> m.getName(), m -> m.getFolders()));
+		var selectableValues = flattenHierarchy(modelNameToTopLevelFolders);
+
+		firstLifeCycleFromFolderSelector.setInput(selectableValues.toArray());
+
+		var folder = getPreferenceStore().getString(PROJECT_LIFECYCLE_FROM_FOLDER);
+		selectableValues.stream().filter(f -> f.folder().getId().equals(folder)).findFirst()
+				.ifPresent(s -> firstLifeCycleFromFolderSelector.setSelection(new StructuredSelection(s)));
+	}
+
 	private void setSelectionAndSelectableValuesOfLifecycleToFolderSelector() {
 		var models = IEditorModelManager.INSTANCE.getModels();
 
@@ -162,8 +187,8 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 
 		firstLifeCycleToFolderSelector.setInput(selectableValues.toArray());
 
-		var folder = getPreferenceStore().getString(PROJECT_LIFECYCLE_TO_FOLDER);
-		selectableValues.stream().filter(f -> f.folder().getId().equals(folder)).findFirst()
+		var toFolder = getPreferenceStore().getString(PROJECT_LIFECYCLE_TO_FOLDER);
+		selectableValues.stream().filter(f -> f.folder().getId().equals(toFolder)).findFirst()
 				.ifPresent(s -> firstLifeCycleToFolderSelector.setSelection(new StructuredSelection(s)));
 	}
 
@@ -212,9 +237,12 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 				.getFirstElement();
 		getPreferenceStore().setValue(PROJECT_CREATION_TEMPLATE_FOLDER, selectedTemplateFolder.folder.getId());
 
-		var selectedFolder = (ModelViewFolder) ((IStructuredSelection) firstLifeCycleToFolderSelector.getSelection())
+		var selectedFromFolder = (ModelViewFolder) ((IStructuredSelection) firstLifeCycleFromFolderSelector
+				.getSelection()).getFirstElement();
+		getPreferenceStore().setValue(PROJECT_LIFECYCLE_FROM_FOLDER, selectedFromFolder.folder.getId());
+		var selectedToFolder = (ModelViewFolder) ((IStructuredSelection) firstLifeCycleToFolderSelector.getSelection())
 				.getFirstElement();
-		getPreferenceStore().setValue(PROJECT_LIFECYCLE_TO_FOLDER, selectedFolder.folder.getId());
+		getPreferenceStore().setValue(PROJECT_LIFECYCLE_TO_FOLDER, selectedToFolder.folder.getId());
 		return true;
 	}
 
@@ -225,7 +253,12 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 		List.of(templateFolderInput).stream().filter(f -> f.folder().getId().equals(templateFolder)).findFirst()
 				.ifPresent(s -> templateSelector.setSelection(new StructuredSelection(s)));
 
-		var lifecycleToFolder = getPreferenceStore().getString(PROJECT_CREATION_TEMPLATE_FOLDER);
+		var lifecycleFromFolder = getPreferenceStore().getString(PROJECT_LIFECYCLE_FROM_FOLDER);
+		var lifecycleFromFolderInput = (ModelViewFolder[]) firstLifeCycleFromFolderSelector.getInput();
+		List.of(lifecycleFromFolderInput).stream().filter(f -> f.folder().getId().equals(lifecycleFromFolder))
+				.findFirst().ifPresent(s -> firstLifeCycleFromFolderSelector.setSelection(new StructuredSelection(s)));
+
+		var lifecycleToFolder = getPreferenceStore().getString(PROJECT_LIFECYCLE_TO_FOLDER);
 		var lifecycleToFolderInput = (ModelViewFolder[]) firstLifeCycleToFolderSelector.getInput();
 		List.of(lifecycleToFolderInput).stream().filter(f -> f.folder().getId().equals(lifecycleToFolder)).findFirst()
 				.ifPresent(s -> firstLifeCycleToFolderSelector.setSelection(new StructuredSelection(s)));
