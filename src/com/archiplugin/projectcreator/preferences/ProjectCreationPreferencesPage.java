@@ -45,23 +45,43 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 	protected Control createContents(Composite parent) {
 		Composite page = createPage(parent);
 
+		createTemplateGroup(page);
+
+		createLifecycleGroup(page);
+
+		return page;
+	}
+
+	private void createTemplateGroup(Composite page) {
 		Group settingsGroup = settingsGroupOn(page, Messages.ProjectCreationPreferencesPage_Template_Settings);
 
+		createTemplateSelection(settingsGroup);
+	}
+
+	private void createTemplateSelection(Group settingsGroup) {
 		createLabelIn(settingsGroup, Messages.ProjectCreationPreferencesPage_Template_Folder);
 
 		templateSelector = createPathSelectorIn(settingsGroup);
 		setSelectionAndSelectableValuesOfTemplateSelector();
+	}
 
+	private void createLifecycleGroup(Composite page) {
 		Group lifecycleSettingsGroup = settingsGroupOn(page,
 				Messages.ProjectCreationPreferencesPage_Lifecycle_Settings);
-		createLabelIn(lifecycleSettingsGroup, Messages.ProjectCreationPreferencesPage_Lifecycle_FromFolder);
-		firstLifeCycleFromFolderSelector = createPathSelectorIn(lifecycleSettingsGroup);
-		setSelectionAndSelectableValuesOfLifecycleFromFolderSelector();
+		createFromFolderSelection(lifecycleSettingsGroup);
+		createToFolderSelection(lifecycleSettingsGroup);
+	}
+
+	private void createToFolderSelection(Group lifecycleSettingsGroup) {
 		createLabelIn(lifecycleSettingsGroup, Messages.ProjectCreationPreferencesPage_Lifecycle_ToFolder);
 		firstLifeCycleToFolderSelector = createPathSelectorIn(lifecycleSettingsGroup);
 		setSelectionAndSelectableValuesOfLifecycleToFolderSelector();
+	}
 
-		return page;
+	private void createFromFolderSelection(Group lifecycleSettingsGroup) {
+		createLabelIn(lifecycleSettingsGroup, Messages.ProjectCreationPreferencesPage_Lifecycle_FromFolder);
+		firstLifeCycleFromFolderSelector = createPathSelectorIn(lifecycleSettingsGroup);
+		setSelectionAndSelectableValuesOfLifecycleFromFolderSelector();
 	}
 
 	private void createLabelIn(Group settingsGroup, String text) {
