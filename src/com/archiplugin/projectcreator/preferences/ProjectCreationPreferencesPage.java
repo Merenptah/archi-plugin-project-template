@@ -1,18 +1,23 @@
 package com.archiplugin.projectcreator.preferences;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.preference.PreferencePage;
+import org.eclipse.jface.viewers.CellLabelProvider;
 import org.eclipse.jface.viewers.ComboViewer;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.StructuredSelection;
+import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.viewers.ViewerCell;
 import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
@@ -34,6 +39,9 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 		implements IWorkbenchPreferencePage, ProjectCreatorPreferenceConstants {
 
 	private ComboViewer templateSelector;
+
+	private List<LifecyclePreference> lifecyclePreferences = new ArrayList<>();
+	private TableViewer lifecycleDefinitionTable;
 	private ComboViewer firstLifeCycleFromFolderSelector;
 	private ComboViewer firstLifeCycleToFolderSelector;
 
@@ -70,6 +78,33 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 				Messages.ProjectCreationPreferencesPage_Lifecycle_Settings);
 		createFromFolderSelection(lifecycleSettingsGroup);
 		createToFolderSelection(lifecycleSettingsGroup);
+
+		createLifecyclePreferenceTable(lifecycleSettingsGroup);
+
+	}
+
+	private void createLifecyclePreferenceTable(Group lifecycleSettingsGroup) {
+		lifecycleDefinitionTable = new TableViewer(lifecycleSettingsGroup);
+		GridDataFactory.create(GridData.FILL_BOTH).hint(SWT.DEFAULT, 200).applyTo(lifecycleDefinitionTable.getTable());
+		lifecycleDefinitionTable.setContentProvider(new IStructuredContentProvider() {
+			@Override
+			public Object[] getElements(Object inputElement) {
+				return lifecyclePreferences.toArray();
+			}
+
+		});
+		lifecycleDefinitionTable.setLabelProvider(new CellLabelProvider() {
+			@Override
+			public void update(ViewerCell cell) {
+				LifecyclePreference entry = (LifecyclePreference) cell.getElement();
+				cell.setText(entry.fromFolderName() + " to " + entry.toFolderName());
+			}
+		});
+
+		lifecyclePreferences.add(
+				new LifecyclePreference("fromFolder", getPreferenceStore().getString(PROJECT_LIFECYCLE_FROM_FOLDER),
+						"toFolder", getPreferenceStore().getString(PROJECT_LIFECYCLE_FROM_FOLDER)));
+		lifecycleDefinitionTable.setInput(lifecyclePreferences);
 	}
 
 	private void createToFolderSelection(Group lifecycleSettingsGroup) {
