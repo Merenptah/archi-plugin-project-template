@@ -88,7 +88,8 @@ public class ProjectLifecycleMenuExtensionContributionFactory extends ExtensionC
 		}
 
 		var currentFolder = (IFolder) firstElement;
-		if (isInDiagramFolder(currentFolder) && currentFolder.getType() == FolderType.USER) {
+		if (isInDiagramFolder(currentFolder) && currentFolder.getType() == FolderType.USER
+				&& isInFromFolder(currentFolder)) {
 			return Optional.of(currentFolder);
 		}
 
@@ -145,6 +146,19 @@ public class ProjectLifecycleMenuExtensionContributionFactory extends ExtensionC
 		while (folder.eContainer() instanceof IFolder) {
 			folder = (IFolder) folder.eContainer();
 			if (folder.getType() == FolderType.DIAGRAMS) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private boolean isInFromFolder(IFolder folder) {
+		var fromFolderId = Activator.INSTANCE.getPreferenceStore()
+				.getString(ProjectCreatorPreferenceConstants.PROJECT_LIFECYCLE_FROM_FOLDER);
+		while (folder.eContainer() instanceof IFolder) {
+			folder = (IFolder) folder.eContainer();
+			if (folder.getId().equals(fromFolderId)) {
 				return true;
 			}
 		}
