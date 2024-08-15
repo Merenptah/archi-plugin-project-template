@@ -81,7 +81,7 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 
 		lifecycleAddButton = new Button(lifecycleSettingsGroup, SWT.PUSH);
 		setButtonLayoutData(lifecycleAddButton);
-		lifecycleAddButton.setText(Messages.ProjectCreationPreferencesPage_Lifecycle_ToFolder);
+		lifecycleAddButton.setText("Add lifecycle");
 		lifecycleAddButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent event) {
