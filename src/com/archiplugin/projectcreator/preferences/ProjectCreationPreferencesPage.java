@@ -1,11 +1,7 @@
 package com.archiplugin.projectcreator.preferences;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.preference.PreferencePage;
@@ -19,9 +15,13 @@ import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerCell;
 import org.eclipse.jface.viewers.ViewerComparator;
+import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Group;
@@ -29,18 +29,16 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
-import com.archimatetool.editor.model.IEditorModelManager;
-import com.archimatetool.model.FolderType;
-import com.archimatetool.model.IArchimateModel;
-import com.archimatetool.model.IFolder;
 import com.archiplugin.projectcreator.Activator;
+import com.archiplugin.projectcreator.preferences.ModelFolders.ModelFolder;
 
 public class ProjectCreationPreferencesPage extends PreferencePage
 		implements IWorkbenchPreferencePage, ProjectCreatorPreferenceConstants {
 
 	private ComboViewer templateSelector;
 
-	private List<LifecyclePreference> lifecyclePreferences = new ArrayList<>();
+	private List<LifecycleDefinition> lifecyclePreferences = new ArrayList<>();
+	private Button lifecycleAddButton;
 	private TableViewer lifecycleDefinitionTable;
 	private ComboViewer firstLifeCycleFromFolderSelector;
 	private ComboViewer firstLifeCycleToFolderSelector;
@@ -81,6 +79,24 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 
 		createLifecyclePreferenceTable(lifecycleSettingsGroup);
 
+		lifecycleAddButton = new Button(lifecycleSettingsGroup, SWT.PUSH);
+		setButtonLayoutData(lifecycleAddButton);
+		lifecycleAddButton.setText(Messages.ProjectCreationPreferencesPage_Lifecycle_ToFolder);
+		lifecycleAddButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent event) {
+				var dialog = new LifecycleDefinitionDialog(getShell());
+				if (dialog.open() == Window.OK) {
+					dialog.getLifecycleDefinition().ifPresent(res -> {
+						getPreferenceStore().setValue(PROJECT_LIFECYCLE_FROM_FOLDER, res.fromFolderId());
+						getPreferenceStore().setValue(PROJECT_LIFECYCLE_TO_FOLDER, res.toFolderId());
+						lifecyclePreferences.add(res);
+						lifecycleDefinitionTable.refresh();
+					});
+
+				}
+			}
+		});
 	}
 
 	private void createLifecyclePreferenceTable(Group lifecycleSettingsGroup) {
@@ -96,13 +112,13 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 		lifecycleDefinitionTable.setLabelProvider(new CellLabelProvider() {
 			@Override
 			public void update(ViewerCell cell) {
-				LifecyclePreference entry = (LifecyclePreference) cell.getElement();
+				LifecycleDefinition entry = (LifecycleDefinition) cell.getElement();
 				cell.setText(entry.fromFolderName() + " to " + entry.toFolderName());
 			}
 		});
 
 		lifecyclePreferences.add(
-				new LifecyclePreference("fromFolder", getPreferenceStore().getString(PROJECT_LIFECYCLE_FROM_FOLDER),
+				new LifecycleDefinition("fromFolder", getPreferenceStore().getString(PROJECT_LIFECYCLE_FROM_FOLDER),
 						"toFolder", getPreferenceStore().getString(PROJECT_LIFECYCLE_FROM_FOLDER)));
 		lifecycleDefinitionTable.setInput(lifecyclePreferences);
 	}
@@ -145,7 +161,7 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 		result.setLabelProvider(new LabelProvider() {
 			@Override
 			public String getText(Object element) {
-				var folder = (ModelViewFolder) element;
+				var folder = (ModelFolder) element;
 
 				var name = folder.modelname() + ": " + folder.folderPath();
 
@@ -188,133 +204,64 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 	}
 
 	private void setSelectionAndSelectableValuesOfTemplateSelector() {
-		var models = IEditorModelManager.INSTANCE.getModels();
+		ModelFolders.getAllModelFolders().onSuccessOrElse(selectableValues -> {
+			templateSelector.setInput(selectableValues.toArray());
+			var toFolder = getPreferenceStore().getString(PROJECT_LIFECYCLE_TO_FOLDER);
+			selectableValues.stream().filter(f -> f.folder().getId().equals(toFolder)).findFirst()
+					.ifPresent(s -> templateSelector.setSelection(new StructuredSelection(s)));
 
-		var dups = duplicateModelsIn(models);
-		if (!dups.isEmpty()) {
-			setErrorMessage("Cannot select templates, duplicate models: " + dups);
-			return;
-		}
-
-		Map<String, List<IFolder>> modelNameToTopLevelFolders = models.stream()
-				.collect(Collectors.toMap(m -> m.getName(), m -> m.getFolders()));
-		var selectableValues = flattenHierarchy(modelNameToTopLevelFolders);
-
-		templateSelector.setInput(selectableValues.toArray());
-
-		var templateFolder = getPreferenceStore().getString(PROJECT_CREATION_TEMPLATE_FOLDER);
-		selectableValues.stream().filter(f -> f.folder().getId().equals(templateFolder)).findFirst()
-				.ifPresent(s -> templateSelector.setSelection(new StructuredSelection(s)));
+		}, error -> setErrorMessage(error));
 	}
 
 	private void setSelectionAndSelectableValuesOfLifecycleFromFolderSelector() {
-		var models = IEditorModelManager.INSTANCE.getModels();
+		ModelFolders.getAllModelFolders().onSuccessOrElse(selectableValues -> {
+			firstLifeCycleFromFolderSelector.setInput(selectableValues.toArray());
+			var toFolder = getPreferenceStore().getString(PROJECT_LIFECYCLE_FROM_FOLDER);
+			selectableValues.stream().filter(f -> f.folder().getId().equals(toFolder)).findFirst()
+					.ifPresent(s -> firstLifeCycleFromFolderSelector.setSelection(new StructuredSelection(s)));
 
-		var dups = duplicateModelsIn(models);
-		if (!dups.isEmpty()) {
-			setErrorMessage("Cannot select project lifecycle folder, duplicate models: " + dups);
-			return;
-		}
-
-		Map<String, List<IFolder>> modelNameToTopLevelFolders = models.stream()
-				.collect(Collectors.toMap(m -> m.getName(), m -> m.getFolders()));
-		var selectableValues = flattenHierarchy(modelNameToTopLevelFolders);
-
-		firstLifeCycleFromFolderSelector.setInput(selectableValues.toArray());
-
-		var folder = getPreferenceStore().getString(PROJECT_LIFECYCLE_FROM_FOLDER);
-		selectableValues.stream().filter(f -> f.folder().getId().equals(folder)).findFirst()
-				.ifPresent(s -> firstLifeCycleFromFolderSelector.setSelection(new StructuredSelection(s)));
+		}, error -> setErrorMessage(error));
 	}
 
 	private void setSelectionAndSelectableValuesOfLifecycleToFolderSelector() {
-		var models = IEditorModelManager.INSTANCE.getModels();
+		ModelFolders.getAllModelFolders().onSuccessOrElse(selectableValues -> {
+			firstLifeCycleToFolderSelector.setInput(selectableValues.toArray());
+			var toFolder = getPreferenceStore().getString(PROJECT_LIFECYCLE_TO_FOLDER);
+			selectableValues.stream().filter(f -> f.folder().getId().equals(toFolder)).findFirst()
+					.ifPresent(s -> firstLifeCycleToFolderSelector.setSelection(new StructuredSelection(s)));
 
-		var dups = duplicateModelsIn(models);
-		if (!dups.isEmpty()) {
-			setErrorMessage("Cannot select project lifecycle folder, duplicate models: " + dups);
-			return;
-		}
-
-		Map<String, List<IFolder>> modelNameToTopLevelFolders = models.stream()
-				.collect(Collectors.toMap(m -> m.getName(), m -> m.getFolders()));
-		var selectableValues = flattenHierarchy(modelNameToTopLevelFolders);
-
-		firstLifeCycleToFolderSelector.setInput(selectableValues.toArray());
-
-		var toFolder = getPreferenceStore().getString(PROJECT_LIFECYCLE_TO_FOLDER);
-		selectableValues.stream().filter(f -> f.folder().getId().equals(toFolder)).findFirst()
-				.ifPresent(s -> firstLifeCycleToFolderSelector.setSelection(new StructuredSelection(s)));
+		}, error -> setErrorMessage(error));
 	}
-
-	private List<String> duplicateModelsIn(List<IArchimateModel> models) {
-		var modelAppearances = models.stream().collect(Collectors.groupingBy(e -> e.getName(), Collectors.counting()));
-
-		return modelAppearances.entrySet().stream().filter(e -> e.getValue() > 1).map(e -> e.getKey())
-				.collect(Collectors.toList());
-
-	}
-
-	private List<ModelViewFolder> flattenHierarchy(Map<String, List<IFolder>> input) {
-		return input.entrySet().stream().flatMap(e -> {
-			return e.getValue().stream().filter(v -> v.getType().equals(FolderType.DIAGRAMS)).flatMap(
-					v -> dive(v.getFolders().stream().collect(Collectors.toMap(f -> f.getName(), Function.identity())))
-							.entrySet().stream().map(d -> new ModelViewFolder(e.getKey(), d.getKey(), d.getValue())));
-		}).toList();
-	}
-
-	private Map<String, IFolder> dive(Map<String, IFolder> pathsToFolders) {
-		var result = new HashMap<String, IFolder>();
-
-		pathsToFolders.entrySet().forEach(pathToFolder -> {
-			result.put(pathToFolder.getKey(), pathToFolder.getValue());
-			if (pathToFolder.getValue().getFolders().isEmpty()) {
-				return;
-			}
-
-			result.putAll(pathToFolder.getValue().getFolders().stream()
-					.map(f -> dive(Map.of(pathToFolder.getKey() + "." + f.getName(), f)))
-					.reduce(new HashMap<>(), (a, b) -> {
-						a.putAll(b);
-						return a;
-					}));
-		});
-
-		return result;
-	}
-
-	private static record ModelViewFolder(String modelname, String folderPath, IFolder folder) {
-	};
 
 	@Override
 	public boolean performOk() {
-		var selectedTemplateFolder = (ModelViewFolder) ((IStructuredSelection) templateSelector.getSelection())
+		var selectedTemplateFolder = (ModelFolder) ((IStructuredSelection) templateSelector.getSelection())
 				.getFirstElement();
-		getPreferenceStore().setValue(PROJECT_CREATION_TEMPLATE_FOLDER, selectedTemplateFolder.folder.getId());
+		getPreferenceStore().setValue(PROJECT_CREATION_TEMPLATE_FOLDER, selectedTemplateFolder.folder().getId());
 
-		var selectedFromFolder = (ModelViewFolder) ((IStructuredSelection) firstLifeCycleFromFolderSelector
-				.getSelection()).getFirstElement();
-		getPreferenceStore().setValue(PROJECT_LIFECYCLE_FROM_FOLDER, selectedFromFolder.folder.getId());
-		var selectedToFolder = (ModelViewFolder) ((IStructuredSelection) firstLifeCycleToFolderSelector.getSelection())
+		var selectedFromFolder = (ModelFolder) ((IStructuredSelection) firstLifeCycleFromFolderSelector.getSelection())
 				.getFirstElement();
-		getPreferenceStore().setValue(PROJECT_LIFECYCLE_TO_FOLDER, selectedToFolder.folder.getId());
+		getPreferenceStore().setValue(PROJECT_LIFECYCLE_FROM_FOLDER, selectedFromFolder.folder().getId());
+		var selectedToFolder = (ModelFolder) ((IStructuredSelection) firstLifeCycleToFolderSelector.getSelection())
+				.getFirstElement();
+		getPreferenceStore().setValue(PROJECT_LIFECYCLE_TO_FOLDER, selectedToFolder.folder().getId());
 		return true;
 	}
 
 	@Override
 	protected void performDefaults() {
 		var templateFolder = getPreferenceStore().getString(PROJECT_CREATION_TEMPLATE_FOLDER);
-		var templateFolderInput = (ModelViewFolder[]) templateSelector.getInput();
+		var templateFolderInput = (ModelFolder[]) templateSelector.getInput();
 		List.of(templateFolderInput).stream().filter(f -> f.folder().getId().equals(templateFolder)).findFirst()
 				.ifPresent(s -> templateSelector.setSelection(new StructuredSelection(s)));
 
 		var lifecycleFromFolder = getPreferenceStore().getString(PROJECT_LIFECYCLE_FROM_FOLDER);
-		var lifecycleFromFolderInput = (ModelViewFolder[]) firstLifeCycleFromFolderSelector.getInput();
+		var lifecycleFromFolderInput = (ModelFolder[]) firstLifeCycleFromFolderSelector.getInput();
 		List.of(lifecycleFromFolderInput).stream().filter(f -> f.folder().getId().equals(lifecycleFromFolder))
 				.findFirst().ifPresent(s -> firstLifeCycleFromFolderSelector.setSelection(new StructuredSelection(s)));
 
 		var lifecycleToFolder = getPreferenceStore().getString(PROJECT_LIFECYCLE_TO_FOLDER);
-		var lifecycleToFolderInput = (ModelViewFolder[]) firstLifeCycleToFolderSelector.getInput();
+		var lifecycleToFolderInput = (ModelFolder[]) firstLifeCycleToFolderSelector.getInput();
 		List.of(lifecycleToFolderInput).stream().filter(f -> f.folder().getId().equals(lifecycleToFolder)).findFirst()
 				.ifPresent(s -> firstLifeCycleToFolderSelector.setSelection(new StructuredSelection(s)));
 
