@@ -126,8 +126,6 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 					var dialog = new LifecycleDefinitionDialog(getShell(), lifecycleDefinition);
 					if (dialog.open() == Window.OK) {
 						dialog.getLifecycleDefinition().ifPresent(res -> {
-							getPreferenceStore().setValue(PROJECT_LIFECYCLE_FROM_FOLDER, res.fromFolderId());
-							getPreferenceStore().setValue(PROJECT_LIFECYCLE_TO_FOLDER, res.toFolderId());
 							lifecyclePreferences.remove(lifecycleDefinition);
 							lifecyclePreferences.add(res);
 							lifecycleDefinitionTable.refresh();
