@@ -206,30 +206,28 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 	private void setSelectionAndSelectableValuesOfTemplateSelector() {
 		ModelFolders.getAllModelFolders().onSuccessOrElse(selectableValues -> {
 			templateSelector.setInput(selectableValues.toArray());
-			var toFolder = getPreferenceStore().getString(PROJECT_LIFECYCLE_TO_FOLDER);
-			selectableValues.stream().filter(f -> f.folder().getId().equals(toFolder)).findFirst()
-					.ifPresent(s -> templateSelector.setSelection(new StructuredSelection(s)));
+			var folder = getPreferenceStore().getString(PROJECT_LIFECYCLE_TO_FOLDER);
 
+			ModelFolders.findFolderById(folder)
+					.onSuccess(s -> templateSelector.setSelection(new StructuredSelection(s)));
 		}, error -> setErrorMessage(error));
 	}
 
 	private void setSelectionAndSelectableValuesOfLifecycleFromFolderSelector() {
 		ModelFolders.getAllModelFolders().onSuccessOrElse(selectableValues -> {
 			firstLifeCycleFromFolderSelector.setInput(selectableValues.toArray());
-			var toFolder = getPreferenceStore().getString(PROJECT_LIFECYCLE_FROM_FOLDER);
-			selectableValues.stream().filter(f -> f.folder().getId().equals(toFolder)).findFirst()
-					.ifPresent(s -> firstLifeCycleFromFolderSelector.setSelection(new StructuredSelection(s)));
-
+			var folder = getPreferenceStore().getString(PROJECT_LIFECYCLE_FROM_FOLDER);
+			ModelFolders.findFolderById(folder)
+					.onSuccess(s -> firstLifeCycleFromFolderSelector.setSelection(new StructuredSelection(s)));
 		}, error -> setErrorMessage(error));
 	}
 
 	private void setSelectionAndSelectableValuesOfLifecycleToFolderSelector() {
 		ModelFolders.getAllModelFolders().onSuccessOrElse(selectableValues -> {
 			firstLifeCycleToFolderSelector.setInput(selectableValues.toArray());
-			var toFolder = getPreferenceStore().getString(PROJECT_LIFECYCLE_TO_FOLDER);
-			selectableValues.stream().filter(f -> f.folder().getId().equals(toFolder)).findFirst()
-					.ifPresent(s -> firstLifeCycleToFolderSelector.setSelection(new StructuredSelection(s)));
-
+			var folder = getPreferenceStore().getString(PROJECT_LIFECYCLE_TO_FOLDER);
+			ModelFolders.findFolderById(folder)
+					.onSuccess(s -> firstLifeCycleToFolderSelector.setSelection(new StructuredSelection(s)));
 		}, error -> setErrorMessage(error));
 	}
 

@@ -1,11 +1,6 @@
 package com.archiplugin.projectcreator.preferences;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
@@ -24,10 +19,7 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 
-import com.archimatetool.editor.model.IEditorModelManager;
-import com.archimatetool.model.FolderType;
-import com.archimatetool.model.IArchimateModel;
-import com.archimatetool.model.IFolder;
+import com.archiplugin.projectcreator.preferences.ModelFolders.ModelFolder;
 
 public class LifecycleDefinitionDialog extends Dialog {
 	private ComboViewer lifecycleFromFolderSelector;
@@ -36,6 +28,12 @@ public class LifecycleDefinitionDialog extends Dialog {
 
 	public LifecycleDefinitionDialog(Shell parentShell) {
 		super(parentShell);
+	}
+
+	public LifecycleDefinitionDialog(Shell parentShell, LifecycleDefinition lifecycleDefinition) {
+		super(parentShell);
+
+		this.lifecycleDefinition = Optional.of(lifecycleDefinition);
 	}
 
 	public Optional<LifecycleDefinition> getLifecycleDefinition() {
@@ -104,7 +102,7 @@ public class LifecycleDefinitionDialog extends Dialog {
 		result.setLabelProvider(new LabelProvider() {
 			@Override
 			public String getText(Object element) {
-				var folder = (ModelViewFolder) element;
+				var folder = (ModelFolder) element;
 
 				var name = folder.modelname() + ": " + folder.folderPath();
 
@@ -123,77 +121,16 @@ public class LifecycleDefinitionDialog extends Dialog {
 	}
 
 	private void setSelectionAndSelectableValuesOfLifecycleFromFolderSelector() {
-		var models = IEditorModelManager.INSTANCE.getModels();
-
-		var dups = duplicateModelsIn(models);
-		if (!dups.isEmpty()) {
-			MessageDialog.openError(getShell(), "Error",
-					"Cannot select project lifecycle folder, duplicate models: " + dups);
-			return;
-		}
-
-		Map<String, List<IFolder>> modelNameToTopLevelFolders = models.stream()
-				.collect(Collectors.toMap(m -> m.getName(), m -> m.getFolders()));
-		var selectableValues = flattenHierarchy(modelNameToTopLevelFolders);
-
-		lifecycleFromFolderSelector.setInput(selectableValues.toArray());
+		ModelFolders.getAllModelFolders().onSuccessOrElse(selectableValues -> {
+			lifecycleFromFolderSelector.setInput(selectableValues.toArray());
+		}, error -> MessageDialog.openError(getShell(), "Error", error));
 	}
 
 	private void setSelectionAndSelectableValuesOfLifecycleToFolderSelector() {
-		var models = IEditorModelManager.INSTANCE.getModels();
-
-		var dups = duplicateModelsIn(models);
-		if (!dups.isEmpty()) {
-			MessageDialog.openError(getShell(), "Error",
-					"Cannot select project lifecycle folder, duplicate models: " + dups);
-			return;
-		}
-
-		Map<String, List<IFolder>> modelNameToTopLevelFolders = models.stream()
-				.collect(Collectors.toMap(m -> m.getName(), m -> m.getFolders()));
-		var selectableValues = flattenHierarchy(modelNameToTopLevelFolders);
-
-		lifecycleToFolderSelector.setInput(selectableValues.toArray());
+		ModelFolders.getAllModelFolders().onSuccessOrElse(selectableValues -> {
+			lifecycleToFolderSelector.setInput(selectableValues.toArray());
+		}, error -> MessageDialog.openError(getShell(), "Error", error));
 	}
-
-	private List<String> duplicateModelsIn(List<IArchimateModel> models) {
-		var modelAppearances = models.stream().collect(Collectors.groupingBy(e -> e.getName(), Collectors.counting()));
-
-		return modelAppearances.entrySet().stream().filter(e -> e.getValue() > 1).map(e -> e.getKey())
-				.collect(Collectors.toList());
-
-	}
-
-	private List<ModelViewFolder> flattenHierarchy(Map<String, List<IFolder>> input) {
-		return input.entrySet().stream().flatMap(e -> {
-			return e.getValue().stream().filter(v -> v.getType().equals(FolderType.DIAGRAMS)).flatMap(
-					v -> dive(v.getFolders().stream().collect(Collectors.toMap(f -> f.getName(), Function.identity())))
-							.entrySet().stream().map(d -> new ModelViewFolder(e.getKey(), d.getKey(), d.getValue())));
-		}).toList();
-	}
-
-	private Map<String, IFolder> dive(Map<String, IFolder> pathsToFolders) {
-		var result = new HashMap<String, IFolder>();
-
-		pathsToFolders.entrySet().forEach(pathToFolder -> {
-			result.put(pathToFolder.getKey(), pathToFolder.getValue());
-			if (pathToFolder.getValue().getFolders().isEmpty()) {
-				return;
-			}
-
-			result.putAll(pathToFolder.getValue().getFolders().stream()
-					.map(f -> dive(Map.of(pathToFolder.getKey() + "." + f.getName(), f)))
-					.reduce(new HashMap<>(), (a, b) -> {
-						a.putAll(b);
-						return a;
-					}));
-		});
-
-		return result;
-	}
-
-	private static record ModelViewFolder(String modelname, String folderPath, IFolder folder) {
-	};
 
 	@Override
 	protected void createButtonsForButtonBar(Composite parent) {
@@ -204,12 +141,13 @@ public class LifecycleDefinitionDialog extends Dialog {
 	@Override
 	protected void buttonPressed(int buttonId) {
 		if (buttonId == IDialogConstants.OK_ID) {
-			var selectedFromFolder = (ModelViewFolder) ((IStructuredSelection) lifecycleFromFolderSelector
-					.getSelection()).getFirstElement();
-			var selectedToFolder = (ModelViewFolder) ((IStructuredSelection) lifecycleToFolderSelector.getSelection())
+			var selectedFromFolder = (ModelFolder) ((IStructuredSelection) lifecycleFromFolderSelector.getSelection())
 					.getFirstElement();
-			lifecycleDefinition = Optional.of(new LifecycleDefinition(selectedFromFolder.folderPath,
-					selectedFromFolder.folder.getId(), selectedToFolder.folderPath, selectedToFolder.folder().getId()));
+			var selectedToFolder = (ModelFolder) ((IStructuredSelection) lifecycleToFolderSelector.getSelection())
+					.getFirstElement();
+			lifecycleDefinition = Optional
+					.of(new LifecycleDefinition(selectedFromFolder.folderPath(), selectedFromFolder.folder().getId(),
+							selectedToFolder.folderPath(), selectedToFolder.folder().getId()));
 		} else {
 			lifecycleDefinition = Optional.empty();
 		}

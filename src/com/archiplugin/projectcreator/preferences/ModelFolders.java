@@ -13,6 +13,10 @@ import com.archimatetool.model.IFolder;
 
 public class ModelFolders {
 	public static Result<List<ModelFolder>, String> getAllModelFolders() {
+		return modelsToTopLevelFolders().mapSuccess(m -> flattenHierarchy(m));
+	}
+
+	private static Result<Map<String, List<IFolder>>, String> modelsToTopLevelFolders() {
 		var models = IEditorModelManager.INSTANCE.getModels();
 
 		var dups = duplicateModelsIn(models);
@@ -22,7 +26,13 @@ public class ModelFolders {
 
 		Map<String, List<IFolder>> modelNameToTopLevelFolders = models.stream()
 				.collect(Collectors.toMap(m -> m.getName(), m -> m.getFolders()));
-		return Result.succeededWith(flattenHierarchy(modelNameToTopLevelFolders));
+		return Result.succeededWith(modelNameToTopLevelFolders);
+	}
+
+	public static Result<ModelFolder, String> findFolderById(String id) {
+		return modelsToTopLevelFolders().mapSuccess(m -> flattenHierarchy(m))
+				.foldSuccess(m -> Result.fromOptional(m.stream().filter(f -> f.folder().getId().equals(id)).findFirst(),
+						"Could not find folder with ID " + id));
 	}
 
 	private static List<String> duplicateModelsIn(List<IArchimateModel> models) {

@@ -19,4 +19,19 @@ public class Failure<S, E> extends Result<S, E> {
 	public S orThrow(Function<E, RuntimeException> exceptionProducer) {
 		throw exceptionProducer.apply(errorResult);
 	}
+
+	@Override
+	public <T> Result<T, E> mapSuccess(Function<S, T> successMapper) {
+		return new Failure<T, E>(errorResult);
+	}
+
+	@Override
+	public <T> Result<T, E> foldSuccess(Function<S, Result<T, E>> successMapper) {
+		return new Failure<T, E>(errorResult);
+	}
+
+	@Override
+	public void onSuccess(Consumer<S> successHandler) {
+
+	}
 }
