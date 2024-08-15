@@ -7,6 +7,8 @@ import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.preference.PreferencePage;
 import org.eclipse.jface.viewers.CellLabelProvider;
 import org.eclipse.jface.viewers.ComboViewer;
+import org.eclipse.jface.viewers.DoubleClickEvent;
+import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.LabelProvider;
@@ -93,7 +95,6 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 						lifecyclePreferences.add(res);
 						lifecycleDefinitionTable.refresh();
 					});
-
 				}
 			}
 		});
@@ -116,10 +117,32 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 				cell.setText(entry.fromFolderName() + " to " + entry.toFolderName());
 			}
 		});
+		lifecycleDefinitionTable.addDoubleClickListener(new IDoubleClickListener() {
+			@Override
+			public void doubleClick(DoubleClickEvent event) {
+				Object[] selected = ((IStructuredSelection) lifecycleDefinitionTable.getSelection()).toArray();
+				if (!(selected == null || selected.length == 0)) {
+					var lifecycleDefinition = (LifecycleDefinition) selected[0];
+					var dialog = new LifecycleDefinitionDialog(getShell(), lifecycleDefinition);
+					if (dialog.open() == Window.OK) {
+						dialog.getLifecycleDefinition().ifPresent(res -> {
+							getPreferenceStore().setValue(PROJECT_LIFECYCLE_FROM_FOLDER, res.fromFolderId());
+							getPreferenceStore().setValue(PROJECT_LIFECYCLE_TO_FOLDER, res.toFolderId());
+							lifecyclePreferences.remove(lifecycleDefinition);
+							lifecyclePreferences.add(res);
+							lifecycleDefinitionTable.refresh();
+						});
+					}
+				}
+			}
+		});
 
-		lifecyclePreferences.add(
-				new LifecycleDefinition("fromFolder", getPreferenceStore().getString(PROJECT_LIFECYCLE_FROM_FOLDER),
-						"toFolder", getPreferenceStore().getString(PROJECT_LIFECYCLE_FROM_FOLDER)));
+		ModelFolders.findFolderById(getPreferenceStore().getString(PROJECT_LIFECYCLE_FROM_FOLDER)).onSuccess(from -> {
+			ModelFolders.findFolderById(getPreferenceStore().getString(PROJECT_LIFECYCLE_TO_FOLDER)).onSuccess(to -> {
+				lifecyclePreferences.add(new LifecycleDefinition(from.folder().getName(), from.folder().getId(),
+						to.folder().getName(), to.folder().getId()));
+			});
+		});
 		lifecycleDefinitionTable.setInput(lifecyclePreferences);
 	}
 

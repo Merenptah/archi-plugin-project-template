@@ -9,6 +9,7 @@ import org.eclipse.jface.viewers.ComboViewer;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.swt.SWT;
@@ -123,12 +124,16 @@ public class LifecycleDefinitionDialog extends Dialog {
 	private void setSelectionAndSelectableValuesOfLifecycleFromFolderSelector() {
 		ModelFolders.getAllModelFolders().onSuccessOrElse(selectableValues -> {
 			lifecycleFromFolderSelector.setInput(selectableValues.toArray());
+			lifecycleDefinition.ifPresent(def -> ModelFolders.findFolderById(def.fromFolderId())
+					.onSuccess(s -> lifecycleFromFolderSelector.setSelection(new StructuredSelection(s))));
 		}, error -> MessageDialog.openError(getShell(), "Error", error));
 	}
 
 	private void setSelectionAndSelectableValuesOfLifecycleToFolderSelector() {
 		ModelFolders.getAllModelFolders().onSuccessOrElse(selectableValues -> {
 			lifecycleToFolderSelector.setInput(selectableValues.toArray());
+			lifecycleDefinition.ifPresent(def -> ModelFolders.findFolderById(def.toFolderId())
+					.onSuccess(s -> lifecycleToFolderSelector.setSelection(new StructuredSelection(s))));
 		}, error -> MessageDialog.openError(getShell(), "Error", error));
 	}
 
