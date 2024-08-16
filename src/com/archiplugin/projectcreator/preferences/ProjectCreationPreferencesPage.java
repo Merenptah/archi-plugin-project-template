@@ -69,7 +69,7 @@ public class ProjectCreationPreferencesPage extends PreferencePage implements IW
 		createLabelIn(settingsGroup, Messages.ProjectCreationPreferencesPage_Template_Folder);
 
 		templateSelector = createPathSelectorIn(settingsGroup);
-		setSelectionAndSelectableValuesOfTemplateSelector();
+		setSelectionAndSelectableValues(templateSelector, Preferences.getTemplateFolderId());
 	}
 
 	private void createLifecycleGroup(Composite page) {
@@ -144,13 +144,13 @@ public class ProjectCreationPreferencesPage extends PreferencePage implements IW
 	private void createToFolderSelection(Group lifecycleSettingsGroup) {
 		createLabelIn(lifecycleSettingsGroup, Messages.ProjectCreationPreferencesPage_Lifecycle_ToFolder);
 		firstLifeCycleToFolderSelector = createPathSelectorIn(lifecycleSettingsGroup);
-		setSelectionAndSelectableValuesOfLifecycleToFolderSelector();
+		setSelectionAndSelectableValues(firstLifeCycleToFolderSelector, Preferences.getLifecycleToFolderId());
 	}
 
 	private void createFromFolderSelection(Group lifecycleSettingsGroup) {
 		createLabelIn(lifecycleSettingsGroup, Messages.ProjectCreationPreferencesPage_Lifecycle_FromFolder);
 		firstLifeCycleFromFolderSelector = createPathSelectorIn(lifecycleSettingsGroup);
-		setSelectionAndSelectableValuesOfLifecycleFromFolderSelector();
+		setSelectionAndSelectableValues(firstLifeCycleFromFolderSelector, Preferences.getLifecycleFromFolderId());
 	}
 
 	private void createLabelIn(Group settingsGroup, String text) {
@@ -221,31 +221,10 @@ public class ProjectCreationPreferencesPage extends PreferencePage implements IW
 		return gd;
 	}
 
-	private void setSelectionAndSelectableValuesOfTemplateSelector() {
+	private void setSelectionAndSelectableValues(ComboViewer selector, String folderId) {
 		ModelFolders.getAllModelFolders().onSuccessOrElse(selectableValues -> {
-			templateSelector.setInput(selectableValues.toArray());
-			var folder = Preferences.getTemplateFolderId();
-
-			ModelFolders.findFolderById(folder)
-					.onSuccess(s -> templateSelector.setSelection(new StructuredSelection(s)));
-		}, error -> setErrorMessage(error));
-	}
-
-	private void setSelectionAndSelectableValuesOfLifecycleFromFolderSelector() {
-		ModelFolders.getAllModelFolders().onSuccessOrElse(selectableValues -> {
-			firstLifeCycleFromFolderSelector.setInput(selectableValues.toArray());
-			var folder = Preferences.getLifecycleFromFolderId();
-			ModelFolders.findFolderById(folder)
-					.onSuccess(s -> firstLifeCycleFromFolderSelector.setSelection(new StructuredSelection(s)));
-		}, error -> setErrorMessage(error));
-	}
-
-	private void setSelectionAndSelectableValuesOfLifecycleToFolderSelector() {
-		ModelFolders.getAllModelFolders().onSuccessOrElse(selectableValues -> {
-			firstLifeCycleToFolderSelector.setInput(selectableValues.toArray());
-			var folder = Preferences.getLifecycleToFolderId();
-			ModelFolders.findFolderById(folder)
-					.onSuccess(s -> firstLifeCycleToFolderSelector.setSelection(new StructuredSelection(s)));
+			selector.setInput(selectableValues.toArray());
+			ModelFolders.findFolderById(folderId).onSuccess(s -> selector.setSelection(new StructuredSelection(s)));
 		}, error -> setErrorMessage(error));
 	}
 
