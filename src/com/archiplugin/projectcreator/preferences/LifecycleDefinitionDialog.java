@@ -150,8 +150,8 @@ public class LifecycleDefinitionDialog extends Dialog {
 					.getFirstElement();
 			var selectedToFolder = (ModelFolder) ((IStructuredSelection) lifecycleToFolderSelector.getSelection())
 					.getFirstElement();
-			lifecycleDefinition = Optional
-					.of(new LifecycleDefinition(selectedFromFolder.folder(), selectedToFolder.folder()));
+			lifecycleDefinition = Optional.of(new LifecycleDefinition(selectedFromFolder.folder(),
+					selectedToFolder.folder()));
 		} else {
 			lifecycleDefinition = Optional.empty();
 		}

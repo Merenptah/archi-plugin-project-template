@@ -12,7 +12,7 @@ public class LifecycleDefinition {
 	}
 
 	public String getFromFolderName() {
-		return this.fromFolder.getName();
+		return this.fromFolder.getArchimateModel().getName() + ":" + this.fromFolder.getName();
 	}
 
 	public String getFromFolderId() {
@@ -20,7 +20,7 @@ public class LifecycleDefinition {
 	}
 
 	public String getToFolderName() {
-		return this.toFolder.getName();
+		return this.toFolder.getArchimateModel().getName() + ":" + this.toFolder.getName();
 	}
 
 	public String getToFolderId() {
