@@ -124,7 +124,7 @@ public class LifecycleDefinitionDialog extends Dialog {
 	private void setSelectionAndSelectableValuesOfLifecycleFromFolderSelector() {
 		ModelFolders.getAllModelFolders().onSuccessOrElse(selectableValues -> {
 			lifecycleFromFolderSelector.setInput(selectableValues.toArray());
-			lifecycleDefinition.ifPresent(def -> ModelFolders.findFolderById(def.fromFolderId())
+			lifecycleDefinition.ifPresent(def -> ModelFolders.findFolderById(def.getFromFolderId())
 					.onSuccess(s -> lifecycleFromFolderSelector.setSelection(new StructuredSelection(s))));
 		}, error -> MessageDialog.openError(getShell(), "Error", error));
 	}
@@ -132,7 +132,7 @@ public class LifecycleDefinitionDialog extends Dialog {
 	private void setSelectionAndSelectableValuesOfLifecycleToFolderSelector() {
 		ModelFolders.getAllModelFolders().onSuccessOrElse(selectableValues -> {
 			lifecycleToFolderSelector.setInput(selectableValues.toArray());
-			lifecycleDefinition.ifPresent(def -> ModelFolders.findFolderById(def.toFolderId())
+			lifecycleDefinition.ifPresent(def -> ModelFolders.findFolderById(def.getToFolderId())
 					.onSuccess(s -> lifecycleToFolderSelector.setSelection(new StructuredSelection(s))));
 		}, error -> MessageDialog.openError(getShell(), "Error", error));
 	}
@@ -151,8 +151,7 @@ public class LifecycleDefinitionDialog extends Dialog {
 			var selectedToFolder = (ModelFolder) ((IStructuredSelection) lifecycleToFolderSelector.getSelection())
 					.getFirstElement();
 			lifecycleDefinition = Optional
-					.of(new LifecycleDefinition(selectedFromFolder.folderPath(), selectedFromFolder.folder().getId(),
-							selectedToFolder.folderPath(), selectedToFolder.folder().getId()));
+					.of(new LifecycleDefinition(selectedFromFolder.folder(), selectedToFolder.folder()));
 		} else {
 			lifecycleDefinition = Optional.empty();
 		}

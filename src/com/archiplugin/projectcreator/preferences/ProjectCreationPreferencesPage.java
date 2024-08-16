@@ -41,8 +41,6 @@ public class ProjectCreationPreferencesPage extends PreferencePage implements IW
 	private List<LifecycleDefinition> lifecyclePreferences = new ArrayList<>();
 	private Button lifecycleAddButton;
 	private TableViewer lifecycleDefinitionTable;
-	private ComboViewer firstLifeCycleFromFolderSelector;
-	private ComboViewer firstLifeCycleToFolderSelector;
 
 	public ProjectCreationPreferencesPage() {
 		setPreferenceStore(Activator.INSTANCE.getPreferenceStore());
@@ -75,8 +73,6 @@ public class ProjectCreationPreferencesPage extends PreferencePage implements IW
 	private void createLifecycleGroup(Composite page) {
 		Group lifecycleSettingsGroup = settingsGroupOn(page,
 				Messages.ProjectCreationPreferencesPage_Lifecycle_Settings);
-		createFromFolderSelection(lifecycleSettingsGroup);
-		createToFolderSelection(lifecycleSettingsGroup);
 
 		createLifecyclePreferenceTable(lifecycleSettingsGroup);
 
@@ -111,7 +107,7 @@ public class ProjectCreationPreferencesPage extends PreferencePage implements IW
 			@Override
 			public void update(ViewerCell cell) {
 				LifecycleDefinition entry = (LifecycleDefinition) cell.getElement();
-				cell.setText(entry.fromFolderName() + " to " + entry.toFolderName());
+				cell.setText(entry.getFromFolderName() + " to " + entry.getToFolderName());
 			}
 		});
 		lifecycleDefinitionTable.addDoubleClickListener(new IDoubleClickListener() {
@@ -132,25 +128,9 @@ public class ProjectCreationPreferencesPage extends PreferencePage implements IW
 			}
 		});
 
-		ModelFolders.findFolderById(Preferences.getLifecycleFromFolderId()).onSuccess(from -> {
-			ModelFolders.findFolderById(Preferences.getLifecycleToFolderId()).onSuccess(to -> {
-				lifecyclePreferences.add(new LifecycleDefinition(from.folder().getName(), from.folder().getId(),
-						to.folder().getName(), to.folder().getId()));
-			});
-		});
+		lifecyclePreferences = new ArrayList<>(Preferences.getPreferenceLifecycles().toLifecycles().toList());
+
 		lifecycleDefinitionTable.setInput(lifecyclePreferences);
-	}
-
-	private void createToFolderSelection(Group lifecycleSettingsGroup) {
-		createLabelIn(lifecycleSettingsGroup, Messages.ProjectCreationPreferencesPage_Lifecycle_ToFolder);
-		firstLifeCycleToFolderSelector = createPathSelectorIn(lifecycleSettingsGroup);
-		setSelectionAndSelectableValues(firstLifeCycleToFolderSelector, Preferences.getLifecycleToFolderId());
-	}
-
-	private void createFromFolderSelection(Group lifecycleSettingsGroup) {
-		createLabelIn(lifecycleSettingsGroup, Messages.ProjectCreationPreferencesPage_Lifecycle_FromFolder);
-		firstLifeCycleFromFolderSelector = createPathSelectorIn(lifecycleSettingsGroup);
-		setSelectionAndSelectableValues(firstLifeCycleFromFolderSelector, Preferences.getLifecycleFromFolderId());
 	}
 
 	private void createLabelIn(Group settingsGroup, String text) {
@@ -234,13 +214,8 @@ public class ProjectCreationPreferencesPage extends PreferencePage implements IW
 				.getFirstElement();
 		Preferences.setTemplateFolderId(selectedTemplateFolder.folder().getId());
 
-		var selectedFromFolder = (ModelFolder) ((IStructuredSelection) firstLifeCycleFromFolderSelector.getSelection())
-				.getFirstElement();
-		Preferences.setLifecycleFromFolderId(selectedFromFolder.folder().getId());
+		Preferences.setPreferenceLifecycles(this.lifecyclePreferences);
 
-		var selectedToFolder = (ModelFolder) ((IStructuredSelection) firstLifeCycleToFolderSelector.getSelection())
-				.getFirstElement();
-		Preferences.setLifecycleToFolderId(selectedToFolder.folder().getId());
 		return true;
 	}
 
@@ -250,16 +225,6 @@ public class ProjectCreationPreferencesPage extends PreferencePage implements IW
 		var templateFolderInput = (ModelFolder[]) templateSelector.getInput();
 		List.of(templateFolderInput).stream().filter(f -> f.folder().getId().equals(templateFolder)).findFirst()
 				.ifPresent(s -> templateSelector.setSelection(new StructuredSelection(s)));
-
-		var lifecycleFromFolder = Preferences.getLifecycleFromFolderId();
-		var lifecycleFromFolderInput = (ModelFolder[]) firstLifeCycleFromFolderSelector.getInput();
-		List.of(lifecycleFromFolderInput).stream().filter(f -> f.folder().getId().equals(lifecycleFromFolder))
-				.findFirst().ifPresent(s -> firstLifeCycleFromFolderSelector.setSelection(new StructuredSelection(s)));
-
-		var lifecycleToFolder = Preferences.getLifecycleToFolderId();
-		var lifecycleToFolderInput = (ModelFolder[]) firstLifeCycleToFolderSelector.getInput();
-		List.of(lifecycleToFolderInput).stream().filter(f -> f.folder().getId().equals(lifecycleToFolder)).findFirst()
-				.ifPresent(s -> firstLifeCycleToFolderSelector.setSelection(new StructuredSelection(s)));
 
 		super.performDefaults();
 	}

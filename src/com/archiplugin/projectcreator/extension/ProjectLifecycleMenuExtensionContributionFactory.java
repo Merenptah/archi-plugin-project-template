@@ -1,6 +1,5 @@
 package com.archiplugin.projectcreator.extension;
 
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -34,11 +33,13 @@ public class ProjectLifecycleMenuExtensionContributionFactory extends ExtensionC
 		var selection = (IStructuredSelection) selectionService.getSelection();
 
 		currentFolder(selection).ifPresent(currentFolder -> {
-			findViewsFolder(currentFolder).flatMap(views -> findTargetFolderIn(views)).ifPresent(targetFolder -> {
+			var matchingLifecycle = Preferences.getPreferenceLifecycles().toLifecycles()
+					.findMatchingLifecycle(currentFolder);
+			matchingLifecycle.ifPresent(lc -> {
 				additions.addContributionItem(new Separator(), null);
 
 				var moveProjectToNextStage = new ActionContributionItem(
-						new MoveProjectToNextStageAction(targetFolder, currentFolder));
+						new MoveProjectToNextStageAction(lc.getToFolder(), currentFolder));
 				additions.addContributionItem(moveProjectToNextStage, null);
 			});
 
@@ -87,8 +88,7 @@ public class ProjectLifecycleMenuExtensionContributionFactory extends ExtensionC
 		}
 
 		var currentFolder = (IFolder) firstElement;
-		if (isInDiagramFolder(currentFolder) && currentFolder.getType() == FolderType.USER
-				&& isInFromFolder(currentFolder)) {
+		if (isInDiagramFolder(currentFolder) && currentFolder.getType() == FolderType.USER) {
 			return Optional.of(currentFolder);
 		}
 
@@ -99,43 +99,6 @@ public class ProjectLifecycleMenuExtensionContributionFactory extends ExtensionC
 		return template.getProperties().stream().collect(Collectors.toMap(p -> p.getKey(), p -> p.getValue()));
 	}
 
-	private Optional<IFolder> findViewsFolder(IFolder currentFolder) {
-		var folderIterator = currentFolder;
-
-		if (folderIterator.getType() == FolderType.DIAGRAMS) {
-			return Optional.of(folderIterator);
-		}
-
-		while (folderIterator.eContainer() instanceof IFolder) {
-			folderIterator = (IFolder) folderIterator.eContainer();
-			if (folderIterator.getType() == FolderType.DIAGRAMS) {
-				return Optional.of(folderIterator);
-			}
-		}
-
-		return Optional.empty();
-	}
-
-	private Optional<IFolder> findTargetFolderIn(IFolder viewsFolder) {
-		var folderId = Preferences.getLifecycleToFolderId();
-
-		for (Iterator<IFolder> iterator = viewsFolder.getFolders().iterator(); iterator.hasNext();) {
-			IFolder f = iterator.next();
-
-			if (f.getId().equals(folderId)) {
-				return Optional.of(f);
-			}
-
-			var intermediateResult = findTargetFolderIn(f);
-			if (intermediateResult.isPresent()) {
-				return intermediateResult;
-			}
-
-		}
-
-		return Optional.empty();
-	}
-
 	private boolean isInDiagramFolder(IFolder folder) {
 		if (folder.getType() == FolderType.DIAGRAMS) {
 			return true;
@@ -144,18 +107,6 @@ public class ProjectLifecycleMenuExtensionContributionFactory extends ExtensionC
 		while (folder.eContainer() instanceof IFolder) {
 			folder = (IFolder) folder.eContainer();
 			if (folder.getType() == FolderType.DIAGRAMS) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	private boolean isInFromFolder(IFolder folder) {
-		var fromFolderId = Preferences.getLifecycleFromFolderId();
-		while (folder.eContainer() instanceof IFolder) {
-			folder = (IFolder) folder.eContainer();
-			if (folder.getId().equals(fromFolderId)) {
 				return true;
 			}
 		}
