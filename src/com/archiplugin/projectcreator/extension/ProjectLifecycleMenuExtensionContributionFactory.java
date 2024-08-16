@@ -20,8 +20,7 @@ import org.eclipse.ui.services.IServiceLocator;
 import com.archimatetool.model.FolderType;
 import com.archimatetool.model.IFolder;
 import com.archimatetool.model.IProperties;
-import com.archiplugin.projectcreator.Activator;
-import com.archiplugin.projectcreator.preferences.ProjectCreatorPreferenceConstants;
+import com.archiplugin.projectcreator.preferences.Preferences;
 import com.archiplugin.projectcreator.project.MoveProject;
 
 public class ProjectLifecycleMenuExtensionContributionFactory extends ExtensionContributionFactory {
@@ -118,8 +117,7 @@ public class ProjectLifecycleMenuExtensionContributionFactory extends ExtensionC
 	}
 
 	private Optional<IFolder> findTargetFolderIn(IFolder viewsFolder) {
-		var folderId = Activator.INSTANCE.getPreferenceStore()
-				.getString(ProjectCreatorPreferenceConstants.PROJECT_LIFECYCLE_TO_FOLDER);
+		var folderId = Preferences.getLifecycleToFolderId();
 
 		for (Iterator<IFolder> iterator = viewsFolder.getFolders().iterator(); iterator.hasNext();) {
 			IFolder f = iterator.next();
@@ -154,8 +152,7 @@ public class ProjectLifecycleMenuExtensionContributionFactory extends ExtensionC
 	}
 
 	private boolean isInFromFolder(IFolder folder) {
-		var fromFolderId = Activator.INSTANCE.getPreferenceStore()
-				.getString(ProjectCreatorPreferenceConstants.PROJECT_LIFECYCLE_FROM_FOLDER);
+		var fromFolderId = Preferences.getLifecycleFromFolderId();
 		while (folder.eContainer() instanceof IFolder) {
 			folder = (IFolder) folder.eContainer();
 			if (folder.getId().equals(fromFolderId)) {

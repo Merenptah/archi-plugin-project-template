@@ -34,8 +34,7 @@ import org.eclipse.ui.IWorkbenchPreferencePage;
 import com.archiplugin.projectcreator.Activator;
 import com.archiplugin.projectcreator.preferences.ModelFolders.ModelFolder;
 
-public class ProjectCreationPreferencesPage extends PreferencePage
-		implements IWorkbenchPreferencePage, ProjectCreatorPreferenceConstants {
+public class ProjectCreationPreferencesPage extends PreferencePage implements IWorkbenchPreferencePage {
 
 	private ComboViewer templateSelector;
 
@@ -90,8 +89,6 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 				var dialog = new LifecycleDefinitionDialog(getShell());
 				if (dialog.open() == Window.OK) {
 					dialog.getLifecycleDefinition().ifPresent(res -> {
-						getPreferenceStore().setValue(PROJECT_LIFECYCLE_FROM_FOLDER, res.fromFolderId());
-						getPreferenceStore().setValue(PROJECT_LIFECYCLE_TO_FOLDER, res.toFolderId());
 						lifecyclePreferences.add(res);
 						lifecycleDefinitionTable.refresh();
 					});
@@ -135,8 +132,8 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 			}
 		});
 
-		ModelFolders.findFolderById(getPreferenceStore().getString(PROJECT_LIFECYCLE_FROM_FOLDER)).onSuccess(from -> {
-			ModelFolders.findFolderById(getPreferenceStore().getString(PROJECT_LIFECYCLE_TO_FOLDER)).onSuccess(to -> {
+		ModelFolders.findFolderById(Preferences.getLifecycleFromFolderId()).onSuccess(from -> {
+			ModelFolders.findFolderById(Preferences.getLifecycleToFolderId()).onSuccess(to -> {
 				lifecyclePreferences.add(new LifecycleDefinition(from.folder().getName(), from.folder().getId(),
 						to.folder().getName(), to.folder().getId()));
 			});
@@ -227,7 +224,7 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 	private void setSelectionAndSelectableValuesOfTemplateSelector() {
 		ModelFolders.getAllModelFolders().onSuccessOrElse(selectableValues -> {
 			templateSelector.setInput(selectableValues.toArray());
-			var folder = getPreferenceStore().getString(PROJECT_LIFECYCLE_TO_FOLDER);
+			var folder = Preferences.getTemplateFolderId();
 
 			ModelFolders.findFolderById(folder)
 					.onSuccess(s -> templateSelector.setSelection(new StructuredSelection(s)));
@@ -237,7 +234,7 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 	private void setSelectionAndSelectableValuesOfLifecycleFromFolderSelector() {
 		ModelFolders.getAllModelFolders().onSuccessOrElse(selectableValues -> {
 			firstLifeCycleFromFolderSelector.setInput(selectableValues.toArray());
-			var folder = getPreferenceStore().getString(PROJECT_LIFECYCLE_FROM_FOLDER);
+			var folder = Preferences.getLifecycleFromFolderId();
 			ModelFolders.findFolderById(folder)
 					.onSuccess(s -> firstLifeCycleFromFolderSelector.setSelection(new StructuredSelection(s)));
 		}, error -> setErrorMessage(error));
@@ -246,7 +243,7 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 	private void setSelectionAndSelectableValuesOfLifecycleToFolderSelector() {
 		ModelFolders.getAllModelFolders().onSuccessOrElse(selectableValues -> {
 			firstLifeCycleToFolderSelector.setInput(selectableValues.toArray());
-			var folder = getPreferenceStore().getString(PROJECT_LIFECYCLE_TO_FOLDER);
+			var folder = Preferences.getLifecycleToFolderId();
 			ModelFolders.findFolderById(folder)
 					.onSuccess(s -> firstLifeCycleToFolderSelector.setSelection(new StructuredSelection(s)));
 		}, error -> setErrorMessage(error));
@@ -256,30 +253,31 @@ public class ProjectCreationPreferencesPage extends PreferencePage
 	public boolean performOk() {
 		var selectedTemplateFolder = (ModelFolder) ((IStructuredSelection) templateSelector.getSelection())
 				.getFirstElement();
-		getPreferenceStore().setValue(PROJECT_CREATION_TEMPLATE_FOLDER, selectedTemplateFolder.folder().getId());
+		Preferences.setTemplateFolderId(selectedTemplateFolder.folder().getId());
 
 		var selectedFromFolder = (ModelFolder) ((IStructuredSelection) firstLifeCycleFromFolderSelector.getSelection())
 				.getFirstElement();
-		getPreferenceStore().setValue(PROJECT_LIFECYCLE_FROM_FOLDER, selectedFromFolder.folder().getId());
+		Preferences.setLifecycleFromFolderId(selectedFromFolder.folder().getId());
+
 		var selectedToFolder = (ModelFolder) ((IStructuredSelection) firstLifeCycleToFolderSelector.getSelection())
 				.getFirstElement();
-		getPreferenceStore().setValue(PROJECT_LIFECYCLE_TO_FOLDER, selectedToFolder.folder().getId());
+		Preferences.setLifecycleToFolderId(selectedToFolder.folder().getId());
 		return true;
 	}
 
 	@Override
 	protected void performDefaults() {
-		var templateFolder = getPreferenceStore().getString(PROJECT_CREATION_TEMPLATE_FOLDER);
+		var templateFolder = Preferences.getTemplateFolderId();
 		var templateFolderInput = (ModelFolder[]) templateSelector.getInput();
 		List.of(templateFolderInput).stream().filter(f -> f.folder().getId().equals(templateFolder)).findFirst()
 				.ifPresent(s -> templateSelector.setSelection(new StructuredSelection(s)));
 
-		var lifecycleFromFolder = getPreferenceStore().getString(PROJECT_LIFECYCLE_FROM_FOLDER);
+		var lifecycleFromFolder = Preferences.getLifecycleFromFolderId();
 		var lifecycleFromFolderInput = (ModelFolder[]) firstLifeCycleFromFolderSelector.getInput();
 		List.of(lifecycleFromFolderInput).stream().filter(f -> f.folder().getId().equals(lifecycleFromFolder))
 				.findFirst().ifPresent(s -> firstLifeCycleFromFolderSelector.setSelection(new StructuredSelection(s)));
 
-		var lifecycleToFolder = getPreferenceStore().getString(PROJECT_LIFECYCLE_TO_FOLDER);
+		var lifecycleToFolder = Preferences.getLifecycleToFolderId();
 		var lifecycleToFolderInput = (ModelFolder[]) firstLifeCycleToFolderSelector.getInput();
 		List.of(lifecycleToFolderInput).stream().filter(f -> f.folder().getId().equals(lifecycleToFolder)).findFirst()
 				.ifPresent(s -> firstLifeCycleToFolderSelector.setSelection(new StructuredSelection(s)));
