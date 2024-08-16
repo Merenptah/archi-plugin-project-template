@@ -9,9 +9,11 @@ import org.eclipse.jface.viewers.CellLabelProvider;
 import org.eclipse.jface.viewers.ComboViewer;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IDoubleClickListener;
+import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
@@ -40,6 +42,7 @@ public class ProjectCreationPreferencesPage extends PreferencePage implements IW
 
 	private List<LifecycleDefinition> lifecyclePreferences = new ArrayList<>();
 	private Button lifecycleAddButton;
+	private Button lifecycleDeleteButton;
 	private TableViewer lifecycleDefinitionTable;
 
 	public ProjectCreationPreferencesPage() {
@@ -58,7 +61,7 @@ public class ProjectCreationPreferencesPage extends PreferencePage implements IW
 	}
 
 	private void createTemplateGroup(Composite page) {
-		Group settingsGroup = settingsGroupOn(page, Messages.ProjectCreationPreferencesPage_Template_Settings);
+		Group settingsGroup = settingsGroupOn(page, Messages.ProjectCreationPreferencesPage_Template_Settings, 2);
 
 		createTemplateSelection(settingsGroup);
 	}
@@ -71,11 +74,42 @@ public class ProjectCreationPreferencesPage extends PreferencePage implements IW
 	}
 
 	private void createLifecycleGroup(Composite page) {
-		Group lifecycleSettingsGroup = settingsGroupOn(page,
-				Messages.ProjectCreationPreferencesPage_Lifecycle_Settings);
+		Group lifecycleSettingsGroup = settingsGroupOn(page, Messages.ProjectCreationPreferencesPage_Lifecycle_Settings,
+				1);
 
 		createLifecyclePreferenceTable(lifecycleSettingsGroup);
 
+		createAddButton(lifecycleSettingsGroup);
+
+		createDeleteButton(lifecycleSettingsGroup);
+
+	}
+
+	private void createDeleteButton(Group lifecycleSettingsGroup) {
+		lifecycleDeleteButton = new Button(lifecycleSettingsGroup, SWT.PUSH);
+		setButtonLayoutData(lifecycleDeleteButton);
+		lifecycleDeleteButton.setText("Remove lifecycle");
+		lifecycleDeleteButton.setEnabled(false);
+		lifecycleDeleteButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent event) {
+				var selectedItem = (LifecycleDefinition) ((IStructuredSelection) lifecycleDefinitionTable
+						.getSelection()).getFirstElement();
+				lifecyclePreferences.remove(selectedItem);
+				lifecycleDefinitionTable.refresh();
+			}
+		});
+
+		lifecycleDefinitionTable.addSelectionChangedListener(new ISelectionChangedListener() {
+
+			@Override
+			public void selectionChanged(SelectionChangedEvent event) {
+				lifecycleDeleteButton.setEnabled(event.getSelection() != null);
+			}
+		});
+	}
+
+	private void createAddButton(Group lifecycleSettingsGroup) {
 		lifecycleAddButton = new Button(lifecycleSettingsGroup, SWT.PUSH);
 		setButtonLayoutData(lifecycleAddButton);
 		lifecycleAddButton.setText("Add lifecycle");
@@ -171,10 +205,10 @@ public class ProjectCreationPreferencesPage extends PreferencePage implements IW
 		return result;
 	}
 
-	private Group settingsGroupOn(Composite page, String groupName) {
+	private Group settingsGroupOn(Composite page, String groupName, int columns) {
 		Group settingsGroup = new Group(page, SWT.NULL);
 		settingsGroup.setText(groupName);
-		settingsGroup.setLayout(new GridLayout(2, false));
+		settingsGroup.setLayout(new GridLayout(columns, false));
 
 		GridData gd = new GridData(GridData.FILL_HORIZONTAL);
 		gd.widthHint = 500;
@@ -221,11 +255,6 @@ public class ProjectCreationPreferencesPage extends PreferencePage implements IW
 
 	@Override
 	protected void performDefaults() {
-		var templateFolder = Preferences.getTemplateFolderId();
-		var templateFolderInput = (ModelFolder[]) templateSelector.getInput();
-		List.of(templateFolderInput).stream().filter(f -> f.folder().getId().equals(templateFolder)).findFirst()
-				.ifPresent(s -> templateSelector.setSelection(new StructuredSelection(s)));
-
 		super.performDefaults();
 	}
 

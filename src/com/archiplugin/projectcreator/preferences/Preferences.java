@@ -62,6 +62,9 @@ public class Preferences {
 			var firstEntry = defs.get(0);
 			preferenceStore().setValue(PROJECT_LIFECYCLE_FROM_FOLDER, firstEntry.getFromFolderId());
 			preferenceStore().setValue(PROJECT_LIFECYCLE_TO_FOLDER, firstEntry.getToFolderId());
+		} else {
+			preferenceStore().setToDefault(PROJECT_LIFECYCLE_FROM_FOLDER);
+			preferenceStore().setToDefault(PROJECT_LIFECYCLE_TO_FOLDER);
 		}
 	}
 
