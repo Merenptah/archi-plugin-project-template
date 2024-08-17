@@ -1,5 +1,6 @@
 package com.archiplugin.projectcreator.preferences;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.eclipse.jface.dialogs.Dialog;
@@ -150,8 +151,8 @@ public class LifecycleDefinitionDialog extends Dialog {
 					.getFirstElement();
 			var selectedToFolder = (ModelFolder) ((IStructuredSelection) lifecycleToFolderSelector.getSelection())
 					.getFirstElement();
-			lifecycleDefinition = Optional.of(new LifecycleDefinition(selectedFromFolder.folder(),
-					selectedToFolder.folder()));
+			lifecycleDefinition = Optional
+					.of(new LifecycleDefinition(selectedFromFolder.folder(), selectedToFolder.folder(), List.of()));
 		} else {
 			lifecycleDefinition = Optional.empty();
 		}

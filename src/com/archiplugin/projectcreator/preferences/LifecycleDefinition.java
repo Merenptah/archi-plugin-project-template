@@ -1,14 +1,18 @@
 package com.archiplugin.projectcreator.preferences;
 
+import java.util.List;
+
 import com.archimatetool.model.IFolder;
 
 public class LifecycleDefinition {
 	private IFolder fromFolder;
 	private IFolder toFolder;
+	private List<String> mandatoryProperties;
 
-	LifecycleDefinition(IFolder fromFolder, IFolder toFolder) {
+	LifecycleDefinition(IFolder fromFolder, IFolder toFolder, List<String> mandatoryProperties) {
 		this.fromFolder = fromFolder;
 		this.toFolder = toFolder;
+		this.mandatoryProperties = mandatoryProperties;
 	}
 
 	public String getFromFolderName() {
@@ -30,4 +34,9 @@ public class LifecycleDefinition {
 	public IFolder getToFolder() {
 		return toFolder;
 	}
+
+	public List<String> getMandatoryProperties() {
+		return mandatoryProperties;
+	}
+
 }

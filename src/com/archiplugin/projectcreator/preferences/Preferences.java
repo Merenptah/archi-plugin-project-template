@@ -4,6 +4,7 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -20,6 +21,11 @@ import org.xml.sax.InputSource;
 import com.archiplugin.projectcreator.Activator;
 
 public class Preferences {
+	private static final String LIST_SEPARATOR = "|";
+	private static final String MANDATORY_PROPS = "mandatoryProps";
+	private static final String TO_FOLDER_ID = "toFolderId";
+	private static final String FROM_FOLDER_ID = "fromFolderId";
+	private static final String LIFECYCLE = "lifecycle";
 	private static String PROJECT_CREATION_TEMPLATE_FOLDER = "ProjectCreationTemplateFolder";
 	private static String PROJECT_LIFECYCLE_FROM_FOLDER = "ProjectLifeCycleFromFolder";
 	private static String PROJECT_LIFECYCLE_TO_FOLDER = "ProjectLifeCycleToFolder";
@@ -88,7 +94,7 @@ public class Preferences {
 			// Parse the content to Document object
 			Document doc = builder.parse(new InputSource(new StringReader(input)));
 
-			var lifecycles = doc.getElementsByTagName("lifecycle");
+			var lifecycles = doc.getElementsByTagName(LIFECYCLE);
 			var result = new ArrayList<LifecyclePreferenceDefinition>();
 
 			for (int i = 0; i < lifecycles.getLength(); i++) {
@@ -96,16 +102,18 @@ public class Preferences {
 				var childs = item.getChildNodes();
 				String fromFolderId = null;
 				String toFolderId = null;
+				List<String> mandatoryProperties = List.of();
 
 				for (int j = 0; j < childs.getLength(); j++) {
 					var child = childs.item(j);
 					switch (child.getNodeName()) {
-					case "fromFolderId" -> fromFolderId = child.getTextContent();
-					case "toFolderId" -> toFolderId = child.getTextContent();
+					case FROM_FOLDER_ID -> fromFolderId = child.getTextContent();
+					case TO_FOLDER_ID -> toFolderId = child.getTextContent();
+					case MANDATORY_PROPS -> mandatoryProperties = List.of(child.getTextContent().split(LIST_SEPARATOR));
 					}
 				}
 
-				var def = new LifecyclePreferenceDefinition(fromFolderId, toFolderId);
+				var def = new LifecyclePreferenceDefinition(fromFolderId, toFolderId, List.of());
 				result.add(def);
 			}
 
@@ -127,11 +135,13 @@ public class Preferences {
 			doc.appendChild(rootElement);
 
 			input.forEach(def -> {
-				var element = doc.createElement("lifecycle");
+				var element = doc.createElement(LIFECYCLE);
 				rootElement.appendChild(element);
 
-				addAttribute(doc, element, "fromFolderId", def.getFromFolderId());
-				addAttribute(doc, element, "toFolderId", def.getToFolderId());
+				addAttribute(doc, element, FROM_FOLDER_ID, def.getFromFolderId());
+				addAttribute(doc, element, TO_FOLDER_ID, def.getToFolderId());
+				addAttribute(doc, element, MANDATORY_PROPS,
+						def.getMandatoryProperties().stream().collect(Collectors.joining(LIST_SEPARATOR)));
 			});
 
 			TransformerFactory transformerFactory = TransformerFactory.newInstance();

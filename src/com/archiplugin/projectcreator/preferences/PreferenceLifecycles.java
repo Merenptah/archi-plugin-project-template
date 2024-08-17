@@ -20,7 +20,8 @@ public class PreferenceLifecycles {
 		this.lifecycles.stream().forEach(prefDef -> {
 			ModelFolders.findFolderById(prefDef.fromFolderId())
 					.onSuccess(from -> ModelFolders.findFolderById(prefDef.toFolderId()).onSuccess(to -> {
-						lifecycleDefs.add(new LifecycleDefinition(from.folder(), to.folder()));
+						lifecycleDefs.add(
+								new LifecycleDefinition(from.folder(), to.folder(), prefDef.mandatoryProperties()));
 					}));
 		});
 

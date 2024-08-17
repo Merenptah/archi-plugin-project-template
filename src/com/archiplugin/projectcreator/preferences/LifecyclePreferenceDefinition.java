@@ -1,5 +1,7 @@
 package com.archiplugin.projectcreator.preferences;
 
-public record LifecyclePreferenceDefinition(String fromFolderId, String toFolderId) {
+import java.util.List;
+
+public record LifecyclePreferenceDefinition(String fromFolderId, String toFolderId, List<String> mandatoryProperties) {
 
 }
