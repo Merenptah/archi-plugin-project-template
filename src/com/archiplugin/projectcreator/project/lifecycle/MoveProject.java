@@ -1,9 +1,19 @@
 package com.archiplugin.projectcreator.project.lifecycle;
 
+import java.util.List;
+import java.util.Optional;
+
+import org.eclipse.emf.common.util.EList;
 import org.eclipse.gef.commands.Command;
+import org.eclipse.jface.window.Window;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PlatformUI;
 
 import com.archimatetool.editor.views.tree.commands.MoveFolderCommand;
+import com.archimatetool.model.IArchimateFactory;
 import com.archimatetool.model.IFolder;
+import com.archimatetool.model.IProperty;
 
 public class MoveProject extends Command {
 
@@ -23,8 +33,33 @@ public class MoveProject extends Command {
 
 	@Override
 	public void execute() {
+		var mandatoryProperties = new MandatoryPropertiesDefinition(List.of("proj-nr"));
+		var mandatoryPropertiesPopup = new LifecycleMandatoryPropertiesDialog(shell(), mandatoryProperties);
+		if (mandatoryPropertiesPopup.open() == Window.OK) {
+			var folderProps = this.projectFolder.getProperties();
+			mandatoryPropertiesPopup.getInputFieldValues().entrySet().forEach(e -> {
+				findProperty(e.getKey(), folderProps).ifPresentOrElse(p -> {
+					p.setValue(e.getValue());
+				}, () -> {
+					var prop = IArchimateFactory.eINSTANCE.createProperty();
+					prop.setKey(e.getKey());
+					prop.setValue(e.getValue());
+					folderProps.add(prop);
+				});
+			});
+		}
 		this.moveFolderCommand = new MoveFolderCommand(this.newParent, this.projectFolder);
 		this.moveFolderCommand.execute();
+	}
+
+	private Shell shell() {
+		IWorkbenchWindow activeWindow = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+		Shell shell = (activeWindow != null) ? activeWindow.getShell() : null;
+		return shell;
+	}
+
+	private Optional<IProperty> findProperty(String key, EList<IProperty> props) {
+		return props.stream().filter(p -> p.getKey().equals(key)).findFirst();
 	}
 
 	@Override
