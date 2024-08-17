@@ -1,4 +1,4 @@
-package com.archiplugin.projectcreator.project;
+package com.archiplugin.projectcreator.project.lifecycle;
 
 import org.eclipse.gef.commands.Command;
 

@@ -1,4 +1,4 @@
-package com.archiplugin.projectcreator.project;
+package com.archiplugin.projectcreator.project.creation;
 
 import java.util.Map;
 import java.util.Optional;
@@ -7,10 +7,10 @@ import java.util.stream.Collectors;
 import com.archimatetool.editor.ui.textrender.TextRenderer;
 import com.archimatetool.model.IArchimateModelObject;
 
-public record ProjectTemplateDefinition(Map<String, String> properties) {
+public record ViewTemplateDefinition(Map<String, String> properties) {
 	private final static String NAME_TEMPLATE_FIELD = "_NAME_TEMPLATE";
 
-	public String resolveName(ProjectDefinition projectDefinition, IArchimateModelObject object, String defaultName) {
+	public String resolveName(ViewDefinition viewDefinition, IArchimateModelObject object, String defaultName) {
 		return Optional.ofNullable(properties.get(NAME_TEMPLATE_FIELD)).map(nameTemplate -> {
 			return TextRenderer.getDefault().renderWithExpression(object, nameTemplate);
 		}).orElse(defaultName);

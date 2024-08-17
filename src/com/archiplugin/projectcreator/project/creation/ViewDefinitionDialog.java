@@ -1,4 +1,4 @@
-package com.archiplugin.projectcreator.project;
+package com.archiplugin.projectcreator.project.creation;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -20,7 +20,7 @@ import com.archimatetool.model.FolderType;
 import com.archimatetool.model.IFolder;
 import com.archimatetool.model.IProperties;
 import com.archiplugin.projectcreator.preferences.Preferences;
-import com.archiplugin.projectcreator.project.MoveProject;
+import com.archiplugin.projectcreator.project.lifecycle.MoveProject;
 
 public class ProjectLifecycleMenuExtensionContributionFactory extends ExtensionContributionFactory {
 

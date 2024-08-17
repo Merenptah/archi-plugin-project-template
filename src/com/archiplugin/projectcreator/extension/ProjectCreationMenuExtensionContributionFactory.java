@@ -22,10 +22,10 @@ import com.archimatetool.model.IDiagramModel;
 import com.archimatetool.model.IFolder;
 import com.archimatetool.model.IProperties;
 import com.archiplugin.projectcreator.preferences.Preferences;
-import com.archiplugin.projectcreator.project.CreateNewProject;
-import com.archiplugin.projectcreator.project.CreateViewFromTemplate;
-import com.archiplugin.projectcreator.project.ProjectTemplateDefinition;
-import com.archiplugin.projectcreator.project.ViewTemplateDefinition;
+import com.archiplugin.projectcreator.project.creation.CreateNewProject;
+import com.archiplugin.projectcreator.project.creation.CreateViewFromTemplate;
+import com.archiplugin.projectcreator.project.creation.ProjectTemplateDefinition;
+import com.archiplugin.projectcreator.project.creation.ViewTemplateDefinition;
 
 public class ProjectCreationMenuExtensionContributionFactory extends ExtensionContributionFactory {
 
