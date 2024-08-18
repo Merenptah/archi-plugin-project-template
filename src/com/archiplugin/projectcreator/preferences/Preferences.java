@@ -21,7 +21,7 @@ import org.xml.sax.InputSource;
 import com.archiplugin.projectcreator.Activator;
 
 public class Preferences {
-	private static final String LIST_SEPARATOR = "|";
+	private static final String LIST_SEPARATOR = ",";
 	private static final String MANDATORY_PROPS = "mandatoryProps";
 	private static final String TO_FOLDER_ID = "toFolderId";
 	private static final String FROM_FOLDER_ID = "fromFolderId";
@@ -113,7 +113,7 @@ public class Preferences {
 					}
 				}
 
-				var def = new LifecyclePreferenceDefinition(fromFolderId, toFolderId, List.of());
+				var def = new LifecyclePreferenceDefinition(fromFolderId, toFolderId, mandatoryProperties);
 				result.add(def);
 			}
 

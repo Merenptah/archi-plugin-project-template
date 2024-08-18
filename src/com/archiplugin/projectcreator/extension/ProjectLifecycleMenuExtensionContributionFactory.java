@@ -19,7 +19,9 @@ import org.eclipse.ui.services.IServiceLocator;
 import com.archimatetool.model.FolderType;
 import com.archimatetool.model.IFolder;
 import com.archimatetool.model.IProperties;
+import com.archiplugin.projectcreator.preferences.LifecycleDefinition;
 import com.archiplugin.projectcreator.preferences.Preferences;
+import com.archiplugin.projectcreator.project.lifecycle.MandatoryPropertiesDefinition;
 import com.archiplugin.projectcreator.project.lifecycle.MoveProject;
 
 public class ProjectLifecycleMenuExtensionContributionFactory extends ExtensionContributionFactory {
@@ -39,7 +41,7 @@ public class ProjectLifecycleMenuExtensionContributionFactory extends ExtensionC
 				additions.addContributionItem(new Separator(), null);
 
 				var moveProjectToNextStage = new ActionContributionItem(
-						new MoveProjectToNextStageAction(lc.getToFolder(), currentFolder));
+						new MoveProjectToNextStageAction(lc, currentFolder));
 				additions.addContributionItem(moveProjectToNextStage, null);
 			});
 
@@ -49,11 +51,11 @@ public class ProjectLifecycleMenuExtensionContributionFactory extends ExtensionC
 
 	private class MoveProjectToNextStageAction extends Action {
 		private final IFolder currentFolder;
-		private final IFolder newParentFolder;
+		private final LifecycleDefinition lifecycleDefinition;
 
-		MoveProjectToNextStageAction(IFolder newParentFolder, IFolder currentFolder) {
+		MoveProjectToNextStageAction(LifecycleDefinition lifecycle, IFolder currentFolder) {
 			this.currentFolder = currentFolder;
-			this.newParentFolder = newParentFolder;
+			this.lifecycleDefinition = lifecycle;
 		}
 
 		@Override
@@ -63,8 +65,9 @@ public class ProjectLifecycleMenuExtensionContributionFactory extends ExtensionC
 
 		@Override
 		public void run() {
-			Command cmd = MoveProject.to(newParentFolder, currentFolder);
-			CommandStack commandStack = (CommandStack) newParentFolder.getAdapter(CommandStack.class);
+			Command cmd = MoveProject.to(lifecycleDefinition.getToFolder(), currentFolder,
+					new MandatoryPropertiesDefinition(lifecycleDefinition.getMandatoryProperties()));
+			CommandStack commandStack = (CommandStack) lifecycleDefinition.getToFolder().getAdapter(CommandStack.class);
 			commandStack.execute(cmd);
 
 		}

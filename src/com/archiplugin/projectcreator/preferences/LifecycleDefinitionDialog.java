@@ -1,9 +1,9 @@
 package com.archiplugin.projectcreator.preferences;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
@@ -175,6 +175,9 @@ public class LifecycleDefinitionDialog extends Dialog {
 					var templateProperties = s.folder().getProperties().stream().map(p -> p.getKey())
 							.collect(Collectors.toList());
 					mandatoryPropertiesTable.setInput(new ArrayList<>(templateProperties));
+					lifecycleDefinition.ifPresent(l -> {
+						mandatoryPropertiesTable.setCheckedElements(l.getMandatoryProperties().toArray());
+					});
 				});
 			}, error -> MessageDialog.openError(getShell(), "Error", error));
 		}
@@ -193,8 +196,10 @@ public class LifecycleDefinitionDialog extends Dialog {
 					.getFirstElement();
 			var selectedToFolder = (ModelFolder) ((IStructuredSelection) lifecycleToFolderSelector.getSelection())
 					.getFirstElement();
-			lifecycleDefinition = Optional
-					.of(new LifecycleDefinition(selectedFromFolder.folder(), selectedToFolder.folder(), List.of()));
+			var selectedProperties = Stream.of(mandatoryPropertiesTable.getCheckedElements()).map(Object::toString)
+					.collect(Collectors.toList());
+			lifecycleDefinition = Optional.of(new LifecycleDefinition(selectedFromFolder.folder(),
+					selectedToFolder.folder(), selectedProperties));
 		} else {
 			lifecycleDefinition = Optional.empty();
 		}

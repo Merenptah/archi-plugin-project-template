@@ -1,6 +1,5 @@
 package com.archiplugin.projectcreator.project.lifecycle;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.eclipse.emf.common.util.EList;
@@ -19,22 +18,25 @@ public class MoveProject extends Command {
 
 	private IFolder newParent;
 	private IFolder projectFolder;
+	private MandatoryPropertiesDefinition mandatoryPropertiesDefinition;
 	private Command moveFolderCommand;
 
-	private MoveProject(IFolder newParent, IFolder projectFolder) {
+	private MoveProject(IFolder newParent, IFolder projectFolder,
+			MandatoryPropertiesDefinition mandatoryPropertiesDefinition) {
 		super();
 		this.newParent = newParent;
 		this.projectFolder = projectFolder;
+		this.mandatoryPropertiesDefinition = mandatoryPropertiesDefinition;
 	}
 
-	public static MoveProject to(IFolder newParent, IFolder projectFolder) {
-		return new MoveProject(newParent, projectFolder);
+	public static MoveProject to(IFolder newParent, IFolder projectFolder,
+			MandatoryPropertiesDefinition mandatoryPropertiesDefinition) {
+		return new MoveProject(newParent, projectFolder, mandatoryPropertiesDefinition);
 	}
 
 	@Override
 	public void execute() {
-		var mandatoryProperties = new MandatoryPropertiesDefinition(List.of("proj-nr"));
-		var mandatoryPropertiesPopup = new LifecycleMandatoryPropertiesDialog(shell(), mandatoryProperties);
+		var mandatoryPropertiesPopup = new LifecycleMandatoryPropertiesDialog(shell(), mandatoryPropertiesDefinition);
 		if (mandatoryPropertiesPopup.open() == Window.OK) {
 			var folderProps = this.projectFolder.getProperties();
 			mandatoryPropertiesPopup.getInputFieldValues().entrySet().forEach(e -> {
