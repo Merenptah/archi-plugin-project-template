@@ -1,5 +1,6 @@
 package com.archiplugin.projectcreator.project.lifecycle;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -20,6 +21,7 @@ public class MoveProject extends Command {
 	private IFolder newParent;
 	private IFolder projectFolder;
 	private MandatoryPropertiesDefinition mandatoryPropertiesDefinition;
+	private List<IProperty> oldProperties;
 	private Command moveFolderCommand;
 
 	private MoveProject(IFolder newParent, IFolder projectFolder,
@@ -27,6 +29,7 @@ public class MoveProject extends Command {
 		super();
 		this.newParent = newParent;
 		this.projectFolder = projectFolder;
+		this.oldProperties = projectFolder.getProperties().stream().toList();
 		this.mandatoryPropertiesDefinition = mandatoryPropertiesDefinition;
 	}
 
@@ -56,6 +59,8 @@ public class MoveProject extends Command {
 						folderProps.add(prop);
 					});
 				});
+			} else {
+				return;
 			}
 		}
 
@@ -84,6 +89,8 @@ public class MoveProject extends Command {
 	public void undo() {
 		if (this.moveFolderCommand != null) {
 			this.moveFolderCommand.undo();
+			this.projectFolder.getProperties().clear();
+			this.projectFolder.getProperties().addAll(oldProperties);
 		}
 	}
 }
