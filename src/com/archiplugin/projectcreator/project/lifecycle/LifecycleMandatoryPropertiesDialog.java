@@ -1,6 +1,7 @@
 package com.archiplugin.projectcreator.project.lifecycle;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -16,13 +17,13 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
 public class LifecycleMandatoryPropertiesDialog extends Dialog {
-	private final MandatoryPropertiesDefinition mandatoryPropertiesDefinition;
+	private final List<String> mandatoryProperties;
 	private Map<String, Text> inputFields = new HashMap<String, Text>();
 	private Map<String, String> inputFieldValues = new HashMap<String, String>();
 
-	LifecycleMandatoryPropertiesDialog(Shell parentShell, MandatoryPropertiesDefinition mandatoryPropertiesDefinition) {
+	LifecycleMandatoryPropertiesDialog(Shell parentShell, List<String> mandatoryProperties) {
 		super(parentShell);
-		this.mandatoryPropertiesDefinition = mandatoryPropertiesDefinition;
+		this.mandatoryProperties = mandatoryProperties;
 	}
 
 	public Map<String, String> getInputFieldValues() {
@@ -39,7 +40,7 @@ public class LifecycleMandatoryPropertiesDialog extends Dialog {
 	protected Control createDialogArea(Composite parent) {
 		Composite twoColumnArea = createTwoColumnArea(parent);
 
-		mandatoryPropertiesDefinition.properties().forEach(label -> addRowWith(twoColumnArea, label, ""));
+		mandatoryProperties.forEach(label -> addRowWith(twoColumnArea, label, ""));
 
 		return twoColumnArea;
 	}

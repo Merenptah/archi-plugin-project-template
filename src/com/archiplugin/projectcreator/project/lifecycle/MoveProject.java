@@ -1,6 +1,7 @@
 package com.archiplugin.projectcreator.project.lifecycle;
 
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.gef.commands.Command;
@@ -36,20 +37,28 @@ public class MoveProject extends Command {
 
 	@Override
 	public void execute() {
-		var mandatoryPropertiesPopup = new LifecycleMandatoryPropertiesDialog(shell(), mandatoryPropertiesDefinition);
-		if (mandatoryPropertiesPopup.open() == Window.OK) {
-			var folderProps = this.projectFolder.getProperties();
-			mandatoryPropertiesPopup.getInputFieldValues().entrySet().forEach(e -> {
-				findProperty(e.getKey(), folderProps).ifPresentOrElse(p -> {
-					p.setValue(e.getValue());
-				}, () -> {
-					var prop = IArchimateFactory.eINSTANCE.createProperty();
-					prop.setKey(e.getKey());
-					prop.setValue(e.getValue());
-					folderProps.add(prop);
+		var folderProps = this.projectFolder.getProperties();
+		var propertiesWithSetValues = folderProps.stream().filter(p -> p.getValue() != null && !p.getValue().isBlank())
+				.map(p -> p.getKey()).collect(Collectors.toList());
+
+		var mandatoryProperties = mandatoryPropertiesDefinition.without(propertiesWithSetValues);
+
+		if (!mandatoryProperties.isEmpty()) {
+			var mandatoryPropertiesPopup = new LifecycleMandatoryPropertiesDialog(shell(), mandatoryProperties);
+			if (mandatoryPropertiesPopup.open() == Window.OK) {
+				mandatoryPropertiesPopup.getInputFieldValues().entrySet().forEach(e -> {
+					findProperty(e.getKey(), folderProps).ifPresentOrElse(p -> {
+						p.setValue(e.getValue());
+					}, () -> {
+						var prop = IArchimateFactory.eINSTANCE.createProperty();
+						prop.setKey(e.getKey());
+						prop.setValue(e.getValue());
+						folderProps.add(prop);
+					});
 				});
-			});
+			}
 		}
+
 		this.moveFolderCommand = new MoveFolderCommand(this.newParent, this.projectFolder);
 		this.moveFolderCommand.execute();
 	}
