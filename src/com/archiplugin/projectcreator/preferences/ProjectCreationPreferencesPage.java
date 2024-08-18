@@ -2,21 +2,22 @@ package com.archiplugin.projectcreator.preferences;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.preference.PreferencePage;
+import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.CellLabelProvider;
+import org.eclipse.jface.viewers.CheckboxTableViewer;
 import org.eclipse.jface.viewers.ComboViewer;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
-import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
-import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerCell;
 import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.jface.window.Window;
@@ -44,6 +45,7 @@ public class ProjectCreationPreferencesPage extends PreferencePage implements IW
 	private Button lifecycleAddButton;
 	private Button lifecycleDeleteButton;
 	private TableViewer lifecycleDefinitionTable;
+	private CheckboxTableViewer mandatoryPropertiesTable;
 
 	public ProjectCreationPreferencesPage() {
 		setPreferenceStore(Activator.INSTANCE.getPreferenceStore());
@@ -78,11 +80,36 @@ public class ProjectCreationPreferencesPage extends PreferencePage implements IW
 				1);
 
 		createLifecyclePreferenceTable(lifecycleSettingsGroup);
-
 		createAddButton(lifecycleSettingsGroup);
-
 		createDeleteButton(lifecycleSettingsGroup);
 
+		mandatoryPropertiesTable = createMandatoryPropertiesTable(lifecycleSettingsGroup, List.of("proj-nr"));
+
+		var templateFolderId = Preferences.getTemplateFolderId();
+		setTemplatePropertiesInMandatoryPropertiesTable(templateFolderId);
+
+		templateSelector.addSelectionChangedListener(new ISelectionChangedListener() {
+
+			@Override
+			public void selectionChanged(SelectionChangedEvent event) {
+				var selectedTemplateFolder = (ModelFolder) ((IStructuredSelection) templateSelector.getSelection())
+						.getFirstElement();
+				setTemplatePropertiesInMandatoryPropertiesTable(selectedTemplateFolder.folder().getId());
+			}
+		});
+
+	}
+
+	private void setTemplatePropertiesInMandatoryPropertiesTable(String templateFolderId) {
+		if (templateFolderId != null && !templateFolderId.isBlank()) {
+			ModelFolders.getAllModelFolders().onSuccessOrElse(selectableValues -> {
+				ModelFolders.findFolderById(templateFolderId).onSuccess(s -> {
+					var templateProperties = s.folder().getProperties().stream().map(p -> p.getKey())
+							.collect(Collectors.toList());
+					mandatoryPropertiesTable.setInput(new ArrayList<>(templateProperties));
+				});
+			}, error -> setErrorMessage(error));
+		}
 	}
 
 	private void createDeleteButton(Group lifecycleSettingsGroup) {
@@ -130,13 +157,7 @@ public class ProjectCreationPreferencesPage extends PreferencePage implements IW
 	private void createLifecyclePreferenceTable(Group lifecycleSettingsGroup) {
 		lifecycleDefinitionTable = new TableViewer(lifecycleSettingsGroup);
 		GridDataFactory.create(GridData.FILL_BOTH).hint(SWT.DEFAULT, 200).applyTo(lifecycleDefinitionTable.getTable());
-		lifecycleDefinitionTable.setContentProvider(new IStructuredContentProvider() {
-			@Override
-			public Object[] getElements(Object inputElement) {
-				return lifecyclePreferences.toArray();
-			}
-
-		});
+		lifecycleDefinitionTable.setContentProvider(new ArrayContentProvider());
 		lifecycleDefinitionTable.setLabelProvider(new CellLabelProvider() {
 			@Override
 			public void update(ViewerCell cell) {
@@ -167,8 +188,8 @@ public class ProjectCreationPreferencesPage extends PreferencePage implements IW
 		lifecycleDefinitionTable.setInput(lifecyclePreferences);
 	}
 
-	private void createLabelIn(Group settingsGroup, String text) {
-		Label label = new Label(settingsGroup, SWT.NULL);
+	private void createLabelIn(Composite parent, String text) {
+		Label label = new Label(parent, SWT.NULL);
 		label.setText(text);
 	}
 
@@ -176,20 +197,7 @@ public class ProjectCreationPreferencesPage extends PreferencePage implements IW
 		var result = new ComboViewer(settingsGroup, SWT.READ_ONLY);
 
 		result.getCombo().setLayoutData(createHorizontalGridData(1));
-		result.setContentProvider(new IStructuredContentProvider() {
-			@Override
-			public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
-			}
-
-			@Override
-			public void dispose() {
-			}
-
-			@Override
-			public Object[] getElements(Object inputElement) {
-				return (Object[]) inputElement;
-			}
-		});
+		result.setContentProvider(new ArrayContentProvider());
 		result.setLabelProvider(new LabelProvider() {
 			@Override
 			public String getText(Object element) {
@@ -240,6 +248,25 @@ public class ProjectCreationPreferencesPage extends PreferencePage implements IW
 			selector.setInput(selectableValues.toArray());
 			ModelFolders.findFolderById(folderId).onSuccess(s -> selector.setSelection(new StructuredSelection(s)));
 		}, error -> setErrorMessage(error));
+	}
+
+	private CheckboxTableViewer createMandatoryPropertiesTable(Composite parent, List<String> allProperties) {
+		createLabelIn(parent, "Mandatory Properties");
+
+		final CheckboxTableViewer viewer = CheckboxTableViewer.newCheckList(parent, SWT.BORDER);
+
+		GridDataFactory.create(GridData.FILL_HORIZONTAL).hint(SWT.DEFAULT, 100).applyTo(viewer.getTable());
+
+		viewer.setLabelProvider(new LabelProvider() {
+			@Override
+			public String getText(Object element) {
+				return (String) element;
+			}
+		});
+
+		viewer.setContentProvider(new ArrayContentProvider());
+
+		return viewer;
 	}
 
 	@Override
