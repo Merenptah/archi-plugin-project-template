@@ -1,11 +1,16 @@
 package com.archiplugin.projectcreator.preferences;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.layout.GridDataFactory;
+import org.eclipse.jface.viewers.ArrayContentProvider;
+import org.eclipse.jface.viewers.CheckboxTableViewer;
 import org.eclipse.jface.viewers.ComboViewer;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -26,6 +31,7 @@ import com.archiplugin.projectcreator.preferences.ModelFolders.ModelFolder;
 public class LifecycleDefinitionDialog extends Dialog {
 	private ComboViewer lifecycleFromFolderSelector;
 	private ComboViewer lifecycleToFolderSelector;
+	private CheckboxTableViewer mandatoryPropertiesTable;
 	private Optional<LifecycleDefinition> lifecycleDefinition = Optional.empty();
 
 	public LifecycleDefinitionDialog(Shell parentShell) {
@@ -54,6 +60,11 @@ public class LifecycleDefinitionDialog extends Dialog {
 
 		createFromFolderSelection(twoColumnArea);
 		createToFolderSelection(twoColumnArea);
+
+		mandatoryPropertiesTable = createMandatoryPropertiesTable(twoColumnArea);
+
+		var templateFolderId = Preferences.getTemplateFolderId();
+		setTemplatePropertiesInMandatoryPropertiesTable(templateFolderId);
 
 		return twoColumnArea;
 	}
@@ -136,6 +147,37 @@ public class LifecycleDefinitionDialog extends Dialog {
 			lifecycleDefinition.ifPresent(def -> ModelFolders.findFolderById(def.getToFolderId())
 					.onSuccess(s -> lifecycleToFolderSelector.setSelection(new StructuredSelection(s))));
 		}, error -> MessageDialog.openError(getShell(), "Error", error));
+	}
+
+	private CheckboxTableViewer createMandatoryPropertiesTable(Composite parent) {
+		createLabelIn(parent, "Mandatory Properties");
+
+		final CheckboxTableViewer viewer = CheckboxTableViewer.newCheckList(parent, SWT.BORDER);
+
+		GridDataFactory.create(GridData.FILL_HORIZONTAL).hint(SWT.DEFAULT, 100).applyTo(viewer.getTable());
+
+		viewer.setLabelProvider(new LabelProvider() {
+			@Override
+			public String getText(Object element) {
+				return (String) element;
+			}
+		});
+
+		viewer.setContentProvider(new ArrayContentProvider());
+
+		return viewer;
+	}
+
+	private void setTemplatePropertiesInMandatoryPropertiesTable(String templateFolderId) {
+		if (templateFolderId != null && !templateFolderId.isBlank()) {
+			ModelFolders.getAllModelFolders().onSuccessOrElse(selectableValues -> {
+				ModelFolders.findFolderById(templateFolderId).onSuccess(s -> {
+					var templateProperties = s.folder().getProperties().stream().map(p -> p.getKey())
+							.collect(Collectors.toList());
+					mandatoryPropertiesTable.setInput(new ArrayList<>(templateProperties));
+				});
+			}, error -> MessageDialog.openError(getShell(), "Error", error));
+		}
 	}
 
 	@Override
