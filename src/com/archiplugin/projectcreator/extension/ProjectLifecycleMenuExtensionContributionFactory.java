@@ -37,6 +37,7 @@ public class ProjectLifecycleMenuExtensionContributionFactory extends ExtensionC
 		currentFolder(selection).ifPresent(currentFolder -> {
 			var matchingLifecycle = Preferences.getPreferenceLifecycles().toLifecycles()
 					.findMatchingLifecycle(currentFolder);
+
 			matchingLifecycle.ifPresent(lc -> {
 				additions.addContributionItem(new Separator(), null);
 

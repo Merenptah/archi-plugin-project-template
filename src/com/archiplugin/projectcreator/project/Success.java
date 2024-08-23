@@ -1,37 +1,43 @@
-package com.archiplugin.projectcreator.preferences;
+package com.archiplugin.projectcreator.project;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class Failure<S, E> extends Result<S, E> {
-	private E errorResult;
+public class Success<S, E> extends Result<S, E> {
+	private S successResult;
 
-	protected Failure(E errorResult) {
-		this.errorResult = errorResult;
+	protected Success(S successResult) {
+		this.successResult = successResult;
 	}
 
 	@Override
 	public void onSuccessOrElse(Consumer<S> successHandler, Consumer<E> errorHandler) {
-		errorHandler.accept(errorResult);
+		successHandler.accept(successResult);
 	}
 
 	@Override
 	public S orThrow(Function<E, RuntimeException> exceptionProducer) {
-		throw exceptionProducer.apply(errorResult);
+		return successResult;
 	}
 
 	@Override
 	public <T> Result<T, E> mapSuccess(Function<S, T> successMapper) {
-		return new Failure<T, E>(errorResult);
+		return new Success<>(successMapper.apply(successResult));
 	}
 
 	@Override
 	public <T> Result<T, E> foldSuccess(Function<S, Result<T, E>> successMapper) {
-		return new Failure<T, E>(errorResult);
+		return successMapper.apply(successResult);
+	}
+
+	@Override
+	public S orElse(S failureValue) {
+		return successResult;
 	}
 
 	@Override
 	public void onSuccess(Consumer<S> successHandler) {
+		successHandler.accept(successResult);
 
 	}
 }

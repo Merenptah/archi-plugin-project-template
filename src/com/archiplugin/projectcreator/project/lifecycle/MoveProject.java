@@ -15,22 +15,29 @@ import com.archimatetool.editor.views.tree.commands.MoveFolderCommand;
 import com.archimatetool.model.IArchimateFactory;
 import com.archimatetool.model.IFolder;
 import com.archimatetool.model.IProperty;
+import com.archiplugin.projectcreator.preferences.Preferences;
+import com.archiplugin.projectcreator.project.Folders;
+import com.archiplugin.projectcreator.project.creation.ProjectDefinition;
+import com.archiplugin.projectcreator.project.creation.ProjectTemplateDefinition;
 
 public class MoveProject extends Command {
 
 	private IFolder newParent;
 	private IFolder projectFolder;
 	private MandatoryPropertiesDefinition mandatoryPropertiesDefinition;
-	private List<IProperty> oldProperties;
 	private Command moveFolderCommand;
+
+	private List<IProperty> oldProperties;
+	private String oldName;
 
 	private MoveProject(IFolder newParent, IFolder projectFolder,
 			MandatoryPropertiesDefinition mandatoryPropertiesDefinition) {
 		super();
 		this.newParent = newParent;
 		this.projectFolder = projectFolder;
-		this.oldProperties = projectFolder.getProperties().stream().toList();
 		this.mandatoryPropertiesDefinition = mandatoryPropertiesDefinition;
+		this.oldProperties = projectFolder.getProperties().stream().toList();
+		this.oldName = projectFolder.getName();
 	}
 
 	public static MoveProject to(IFolder newParent, IFolder projectFolder,
@@ -66,6 +73,17 @@ public class MoveProject extends Command {
 
 		this.moveFolderCommand = new MoveFolderCommand(this.newParent, this.projectFolder);
 		this.moveFolderCommand.execute();
+		this.projectFolder.setName(this.createNewName(this.projectFolder));
+	}
+
+	private String createNewName(IFolder projectFolder) {
+		return Folders.findFolderById(Preferences.getTemplateFolderId()).mapSuccess(f -> {
+			var templateProperties = f.folder().getProperties().stream()
+					.collect(Collectors.toMap(IProperty::getKey, IProperty::getValue));
+			var projectsProperties = projectFolder.getProperties().stream()
+					.collect(Collectors.toMap(IProperty::getKey, IProperty::getValue));
+			return new ProjectDefinition(new ProjectTemplateDefinition(templateProperties), projectsProperties);
+		}).mapSuccess(def -> def.name(projectFolder, projectFolder.getName())).orElse(projectFolder.getName());
 	}
 
 	private Shell shell() {
@@ -91,6 +109,7 @@ public class MoveProject extends Command {
 			this.moveFolderCommand.undo();
 			this.projectFolder.getProperties().clear();
 			this.projectFolder.getProperties().addAll(oldProperties);
+			this.projectFolder.setName(oldName);
 		}
 	}
 }

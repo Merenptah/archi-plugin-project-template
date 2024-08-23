@@ -14,8 +14,8 @@ public class ProjectDefinition {
 		this.properties = properties;
 	}
 
-	public String name(IArchimateModelObject object) {
-		return template.resolveName(this, object, "Dummy");
+	public String name(IArchimateModelObject object, String defaultName) {
+		return template.resolveName(this, object, defaultName);
 	}
 
 	public void updatePropertiesAndName(Consumer<Map<String, String>> propertiesUpdater, Consumer<String> nameUpdater,

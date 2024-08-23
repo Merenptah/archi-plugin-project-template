@@ -1,10 +1,11 @@
-package com.archiplugin.projectcreator.preferences;
+package com.archiplugin.projectcreator.project;
 
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
-abstract class Result<S, E> {
+abstract public class Result<S, E> {
 
 	public static <S, E> Result<S, E> succeededWith(S successResult) {
 		return new Success<>(successResult);
@@ -23,6 +24,8 @@ abstract class Result<S, E> {
 	public abstract void onSuccess(Consumer<S> successHandler);
 
 	public abstract <T> Result<T, E> mapSuccess(Function<S, T> successMapper);
+	
+	public abstract S orElse(S failureValue);
 
 	public abstract <T> Result<T, E> foldSuccess(Function<S, Result<T, E>> successMapper);
 

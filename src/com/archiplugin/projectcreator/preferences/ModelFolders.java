@@ -10,6 +10,7 @@ import com.archimatetool.editor.model.IEditorModelManager;
 import com.archimatetool.model.FolderType;
 import com.archimatetool.model.IArchimateModel;
 import com.archimatetool.model.IFolder;
+import com.archiplugin.projectcreator.project.Result;
 
 public class ModelFolders {
 	public static Result<List<ModelFolder>, String> getAllModelFolders() {
