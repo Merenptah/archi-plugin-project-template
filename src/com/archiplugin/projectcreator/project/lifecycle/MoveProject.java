@@ -83,7 +83,7 @@ public class MoveProject extends Command {
 			var projectsProperties = projectFolder.getProperties().stream()
 					.collect(Collectors.toMap(IProperty::getKey, IProperty::getValue));
 			return new ProjectDefinition(new ProjectTemplateDefinition(templateProperties), projectsProperties);
-		}).mapSuccess(def -> def.name(projectFolder, projectFolder.getName())).orElse(projectFolder.getName());
+		}).mapSuccess(def -> def.name(projectFolder, projectFolder.getName())).recover(projectFolder.getName());
 	}
 
 	private Shell shell() {

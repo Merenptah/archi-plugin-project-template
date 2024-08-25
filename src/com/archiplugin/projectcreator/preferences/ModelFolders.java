@@ -32,7 +32,7 @@ public class ModelFolders {
 
 	public static Result<ModelFolder, String> findFolderById(String id) {
 		return modelsToTopLevelFolders().mapSuccess(m -> flattenHierarchy(m))
-				.foldSuccess(m -> Result.fromOptional(m.stream().filter(f -> f.folder().getId().equals(id)).findFirst(),
+				.lift(m -> Result.fromOptional(m.stream().filter(f -> f.folder().getId().equals(id)).findFirst(),
 						"Could not find folder with ID " + id));
 	}
 

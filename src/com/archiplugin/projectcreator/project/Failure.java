@@ -26,13 +26,13 @@ public class Failure<S, E> extends Result<S, E> {
 	}
 
 	@Override
-	public <T> Result<T, E> foldSuccess(Function<S, Result<T, E>> successMapper) {
+	public <T> Result<T, E> lift(Function<S, Result<T, E>> successMapper) {
 		return new Failure<T, E>(errorResult);
 	}
 	
 	
 	@Override
-	public S orElse(S failureValue) {
+	public S recover(S failureValue) {
 		return failureValue;
 	}
 
