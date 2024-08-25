@@ -3,10 +3,8 @@ package com.archiplugin.projectcreator.preferences;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.preference.PreferencePage;
 import org.eclipse.jface.viewers.ArrayContentProvider;
-import org.eclipse.jface.viewers.CellLabelProvider;
 import org.eclipse.jface.viewers.ComboViewer;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IDoubleClickListener;
@@ -16,7 +14,6 @@ import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
-import org.eclipse.jface.viewers.ViewerCell;
 import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
@@ -124,16 +121,7 @@ public class ProjectCreationPreferencesPage extends PreferencePage implements IW
 	}
 
 	private void createLifecyclePreferenceTable(Group lifecycleSettingsGroup) {
-		lifecycleDefinitionTable = new TableViewer(lifecycleSettingsGroup);
-		GridDataFactory.create(GridData.FILL_BOTH).hint(SWT.DEFAULT, 200).applyTo(lifecycleDefinitionTable.getTable());
-		lifecycleDefinitionTable.setContentProvider(new ArrayContentProvider());
-		lifecycleDefinitionTable.setLabelProvider(new CellLabelProvider() {
-			@Override
-			public void update(ViewerCell cell) {
-				LifecycleDefinition entry = (LifecycleDefinition) cell.getElement();
-				cell.setText(entry.getFromFolderName() + " to " + entry.getToFolderName());
-			}
-		});
+		lifecycleDefinitionTable = new LifecyclePreferencesTableViewer(lifecycleSettingsGroup);
 		lifecycleDefinitionTable.addDoubleClickListener(new IDoubleClickListener() {
 			@Override
 			public void doubleClick(DoubleClickEvent event) {
