@@ -81,7 +81,7 @@ public class ProjectCreationPreferencesPage extends PreferencePage implements IW
 	private void createDeleteButton(Group lifecycleSettingsGroup) {
 		lifecycleDeleteButton = new Button(lifecycleSettingsGroup, SWT.PUSH);
 		setButtonLayoutData(lifecycleDeleteButton);
-		lifecycleDeleteButton.setText("Remove lifecycle");
+		lifecycleDeleteButton.setText(Messages.ProjectCreationPreferencesPage_Lifecycle_RemoveLifecycle);
 		lifecycleDeleteButton.setEnabled(false);
 		lifecycleDeleteButton.addSelectionListener(new SelectionAdapter() {
 			@Override
@@ -105,7 +105,7 @@ public class ProjectCreationPreferencesPage extends PreferencePage implements IW
 	private void createAddButton(Group lifecycleSettingsGroup) {
 		lifecycleAddButton = new Button(lifecycleSettingsGroup, SWT.PUSH);
 		setButtonLayoutData(lifecycleAddButton);
-		lifecycleAddButton.setText("Add lifecycle");
+		lifecycleAddButton.setText(Messages.ProjectCreationPreferencesPage_Lifecycle_AddLifecycle);
 		lifecycleAddButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent event) {
@@ -160,7 +160,7 @@ public class ProjectCreationPreferencesPage extends PreferencePage implements IW
 			public String getText(Object element) {
 				var folder = (ModelFolder) element;
 
-				var name = folder.modelname() + ": " + folder.folderPath();
+				var name = folder.modelname() + ": " + folder.folderPath(); //$NON-NLS-1$
 
 				return name;
 			}

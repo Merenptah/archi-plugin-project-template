@@ -51,7 +51,7 @@ public class LifecycleDefinitionDialog extends Dialog {
 	@Override
 	protected void configureShell(Shell shell) {
 		super.configureShell(shell);
-		shell.setText("Lifecycle Configuration");
+		shell.setText(Messages.LifecycleDefinitionDialog_Header);
 	}
 
 	@Override
@@ -117,7 +117,7 @@ public class LifecycleDefinitionDialog extends Dialog {
 			public String getText(Object element) {
 				var folder = (ModelFolder) element;
 
-				var name = folder.modelname() + ": " + folder.folderPath();
+				var name = folder.modelname() + ": " + folder.folderPath(); //$NON-NLS-1$
 
 				return name;
 			}
@@ -138,7 +138,7 @@ public class LifecycleDefinitionDialog extends Dialog {
 			lifecycleFromFolderSelector.setInput(selectableValues.toArray());
 			lifecycleDefinition.ifPresent(def -> ModelFolders.findFolderById(def.getFromFolderId())
 					.onSuccess(s -> lifecycleFromFolderSelector.setSelection(new StructuredSelection(s))));
-		}, error -> MessageDialog.openError(getShell(), "Error", error));
+		}, error -> MessageDialog.openError(getShell(), Messages.LifecycleDefinitionDialog_ErrorHeader, error));
 	}
 
 	private void setSelectionAndSelectableValuesOfLifecycleToFolderSelector() {
@@ -146,11 +146,11 @@ public class LifecycleDefinitionDialog extends Dialog {
 			lifecycleToFolderSelector.setInput(selectableValues.toArray());
 			lifecycleDefinition.ifPresent(def -> ModelFolders.findFolderById(def.getToFolderId())
 					.onSuccess(s -> lifecycleToFolderSelector.setSelection(new StructuredSelection(s))));
-		}, error -> MessageDialog.openError(getShell(), "Error", error));
+		}, error -> MessageDialog.openError(getShell(), Messages.LifecycleDefinitionDialog_ErrorHeader, error));
 	}
 
 	private CheckboxTableViewer createMandatoryPropertiesTable(Composite parent) {
-		createLabelIn(parent, "Mandatory Properties");
+		createLabelIn(parent, Messages.LifecycleDefinitionDialog_MandatoryProperties);
 
 		final CheckboxTableViewer viewer = CheckboxTableViewer.newCheckList(parent, SWT.BORDER);
 
@@ -179,7 +179,7 @@ public class LifecycleDefinitionDialog extends Dialog {
 						mandatoryPropertiesTable.setCheckedElements(l.getMandatoryProperties().toArray());
 					});
 				});
-			}, error -> MessageDialog.openError(getShell(), "Error", error));
+			}, error -> MessageDialog.openError(getShell(), Messages.LifecycleDefinitionDialog_ErrorHeader, error));
 		}
 	}
 
