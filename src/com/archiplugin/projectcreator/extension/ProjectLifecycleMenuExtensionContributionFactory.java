@@ -61,7 +61,7 @@ public class ProjectLifecycleMenuExtensionContributionFactory extends ExtensionC
 
 		@Override
 		public String getText() {
-			return Messages.MoveProjectToNextStageMenuEntry;
+			return Messages.MoveProjectToNextStageMenuEntry + " " + lifecycleDefinition.getToFolderName();
 		}
 
 		@Override
