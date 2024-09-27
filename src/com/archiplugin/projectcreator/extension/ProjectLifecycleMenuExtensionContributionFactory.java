@@ -35,10 +35,10 @@ public class ProjectLifecycleMenuExtensionContributionFactory extends ExtensionC
 		var selection = (IStructuredSelection) selectionService.getSelection();
 
 		currentFolder(selection).ifPresent(currentFolder -> {
-			var matchingLifecycle = Preferences.getPreferenceLifecycles().toLifecycles()
-					.findMatchingLifecycle(currentFolder);
+			var matchingLifecycles = Preferences.getPreferenceLifecycles().toLifecycles()
+					.findMatchingLifecycles(currentFolder);
 
-			matchingLifecycle.ifPresent(lc -> {
+			matchingLifecycles.forEach(lc -> {
 				additions.addContributionItem(new Separator(), null);
 
 				var moveProjectToNextStage = new ActionContributionItem(

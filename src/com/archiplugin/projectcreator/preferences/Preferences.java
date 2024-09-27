@@ -109,7 +109,8 @@ public class Preferences {
 					switch (child.getNodeName()) {
 					case FROM_FOLDER_ID -> fromFolderId = child.getTextContent();
 					case TO_FOLDER_ID -> toFolderId = child.getTextContent();
-					case MANDATORY_PROPS -> mandatoryProperties = List.of(child.getTextContent().split(LIST_SEPARATOR));
+					case MANDATORY_PROPS -> mandatoryProperties = child.getTextContent().isBlank() ? List.of()
+							: List.of(child.getTextContent().split(LIST_SEPARATOR));
 					}
 				}
 

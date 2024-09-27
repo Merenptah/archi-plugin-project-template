@@ -1,5 +1,6 @@
 package com.archiplugin.projectcreator.preferences;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,26 +17,24 @@ public class Lifecycles {
 		return lifecycles.stream().anyMatch(l -> l.getFromFolderId().equals(id));
 	}
 
-	private Optional<LifecycleDefinition> findContainingLifecycle(String id) {
-		return lifecycles.stream().filter(l -> l.getFromFolderId().equals(id)).findFirst();
+	private List<LifecycleDefinition> findContainingLifecycles(String id) {
+		return lifecycles.stream().filter(l -> l.getFromFolderId().equals(id)).toList();
 	}
 
 	public List<LifecycleDefinition> toList() {
 		return List.copyOf(lifecycles);
 	}
 
-	public Optional<LifecycleDefinition> findMatchingLifecycle(IFolder folder) {
+	public List<LifecycleDefinition> findMatchingLifecycles(IFolder folder) {
+		var result = new ArrayList<LifecycleDefinition>();
 
 		while (folder.eContainer() instanceof IFolder) {
 			folder = (IFolder) folder.eContainer();
 
-			var match = findContainingLifecycle(folder.getId());
-			if (match.isPresent()) {
-				return match;
-			}
+			result.addAll(findContainingLifecycles(folder.getId()));
 		}
 
-		return Optional.empty();
+		return result;
 	}
 
 }
