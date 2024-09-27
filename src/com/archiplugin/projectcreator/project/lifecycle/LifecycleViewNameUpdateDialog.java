@@ -1,15 +1,12 @@
 package com.archiplugin.projectcreator.project.lifecycle;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.ModifyEvent;
-import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
@@ -42,12 +39,12 @@ public class LifecycleViewNameUpdateDialog extends Dialog {
 	protected Control createDialogArea(Composite parent) {
 		Composite twoColumnArea = createTwoColumnArea(parent);
 
-		viewIdToNames.entrySet().forEach(e -> addRowWith(twoColumnArea, e.getValue(), e.getValue()));
+		viewIdToNames.entrySet().forEach(e -> addRowWith(twoColumnArea, e.getValue(), e.getValue(), e.getKey()));
 
 		return twoColumnArea;
 	}
 
-	private void addRowWith(Composite twoColumnArea, String labelText, String defaultValue) {
+	private void addRowWith(Composite twoColumnArea, String labelText, String defaultValue, String id) {
 		Label label = new Label(twoColumnArea, SWT.None);
 		label.setText(labelText);
 		GridData data = new GridData(SWT.BEGINNING, SWT.CENTER, false, false);
@@ -58,16 +55,7 @@ public class LifecycleViewNameUpdateDialog extends Dialog {
 		inputField.setLayoutData(inputFieldLayout);
 		inputField.setText(defaultValue);
 
-		inputField.addModifyListener(new ModifyListener() {
-			@Override
-			public void modifyText(ModifyEvent e) {
-				getButton(IDialogConstants.OK_ID).setEnabled(inputFields.entrySet().stream()
-						.allMatch(f -> f.getValue().getText() != null && !f.getValue().getText().isBlank()));
-
-			}
-		});
-
-		inputFields.put(labelText, inputField);
+		inputFields.put(id, inputField);
 	}
 
 	private Composite createTwoColumnArea(Composite parent) {
@@ -82,9 +70,7 @@ public class LifecycleViewNameUpdateDialog extends Dialog {
 
 	@Override
 	protected void createButtonsForButtonBar(Composite parent) {
-		var okButton = createButton(parent, IDialogConstants.OK_ID, IDialogConstants.OK_LABEL, true);
-		okButton.setEnabled(false);
-
+		createButton(parent, IDialogConstants.OK_ID, IDialogConstants.OK_LABEL, true);
 		createButton(parent, IDialogConstants.CANCEL_ID, IDialogConstants.CANCEL_LABEL, false);
 	}
 
