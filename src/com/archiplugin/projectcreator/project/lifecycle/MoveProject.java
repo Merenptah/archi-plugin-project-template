@@ -1,6 +1,7 @@
 package com.archiplugin.projectcreator.project.lifecycle;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -56,16 +57,16 @@ public class MoveProject extends Command {
 		if (!mandatoryProperties.isEmpty()) {
 			var mandatoryPropertiesPopup = new LifecycleMandatoryPropertiesDialog(shell(), mandatoryProperties);
 			if (mandatoryPropertiesPopup.open() == Window.OK) {
-				mandatoryPropertiesPopup.getInputFieldValues().entrySet().forEach(e -> {
-					findProperty(e.getKey(), folderProps).ifPresentOrElse(p -> {
-						p.setValue(e.getValue());
-					}, () -> {
-						var prop = IArchimateFactory.eINSTANCE.createProperty();
-						prop.setKey(e.getKey());
-						prop.setValue(e.getValue());
-						folderProps.add(prop);
-					});
-				});
+				updateProperties(folderProps, mandatoryPropertiesPopup);
+			} else {
+				return;
+			}
+		}
+		var currentViewNames = Map.of();
+		
+		if (!currentViewNames.isEmpty()) {	
+			var updatedViewNamesPopup = new LifecycleViewNameUpdateDialog(shell(), Map.of());
+			if (updatedViewNamesPopup.open() == Window.OK) {
 			} else {
 				return;
 			}
@@ -74,6 +75,20 @@ public class MoveProject extends Command {
 		this.moveFolderCommand = new MoveFolderCommand(this.newParent, this.projectFolder);
 		this.moveFolderCommand.execute();
 		this.projectFolder.setName(this.createNewName(this.projectFolder));
+	}
+
+	private void updateProperties(EList<IProperty> folderProps,
+			LifecycleMandatoryPropertiesDialog mandatoryPropertiesPopup) {
+		mandatoryPropertiesPopup.getInputFieldValues().entrySet().forEach(e -> {
+			findProperty(e.getKey(), folderProps).ifPresentOrElse(p -> {
+				p.setValue(e.getValue());
+			}, () -> {
+				var prop = IArchimateFactory.eINSTANCE.createProperty();
+				prop.setKey(e.getKey());
+				prop.setValue(e.getValue());
+				folderProps.add(prop);
+			});
+		});
 	}
 
 	private String createNewName(IFolder projectFolder) {
