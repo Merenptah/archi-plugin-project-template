@@ -1,4 +1,4 @@
-package com.archiplugin.projectcreator.project;
+package com.archiplugin.projectcreator.project.lifecycle;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,41 +15,36 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
-public class ViewDefinitionDialog extends Dialog {
-	private final ViewTemplateDefinition viewTemplateDefinition;
+public class LifecycleViewNameUpdateDialog extends Dialog {
+	private final Map<String, String> viewIdToNames;
 	private Map<String, Text> inputFields = new HashMap<String, Text>();
 	private Map<String, String> inputFieldValues = new HashMap<String, String>();
 
-	public ViewDefinitionDialog(Shell parentShell, ViewTemplateDefinition viewTemplateDefinition) {
+	LifecycleViewNameUpdateDialog(Shell parentShell, Map<String, String> viewIdToNames) {
 		super(parentShell);
-		this.viewTemplateDefinition = viewTemplateDefinition;
+		this.viewIdToNames = viewIdToNames;
 	}
 
-	public Map<String, String> getInputFieldValues() {
+	public Map<String, String> getUpdatedViewNames() {
 		return inputFieldValues;
-	}
-
-	public ViewDefinition viewDefinition() {
-		return new ViewDefinition(viewTemplateDefinition, inputFieldValues);
 	}
 
 	@Override
 	protected void configureShell(Shell shell) {
 		super.configureShell(shell);
-		shell.setText("View Definition");
+		shell.setText("View Name Update");
 	}
 
 	@Override
 	protected Control createDialogArea(Composite parent) {
 		Composite twoColumnArea = createTwoColumnArea(parent);
 
-		viewTemplateDefinition.properties()
-				.forEach((label, defaultValue) -> addRowWith(twoColumnArea, label, defaultValue));
+		viewIdToNames.entrySet().forEach(e -> addRowWith(twoColumnArea, e.getValue(), e.getValue(), e.getKey()));
 
 		return twoColumnArea;
 	}
 
-	private void addRowWith(Composite twoColumnArea, String labelText, String defaultValue) {
+	private void addRowWith(Composite twoColumnArea, String labelText, String defaultValue, String id) {
 		Label label = new Label(twoColumnArea, SWT.None);
 		label.setText(labelText);
 		GridData data = new GridData(SWT.BEGINNING, SWT.CENTER, false, false);
@@ -60,7 +55,7 @@ public class ViewDefinitionDialog extends Dialog {
 		inputField.setLayoutData(inputFieldLayout);
 		inputField.setText(defaultValue);
 
-		inputFields.put(labelText, inputField);
+		inputFields.put(id, inputField);
 	}
 
 	private Composite createTwoColumnArea(Composite parent) {

@@ -1,12 +1,15 @@
-package com.archiplugin.projectcreator.project;
+package com.archiplugin.projectcreator.project.lifecycle;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
@@ -15,22 +18,18 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
-public class ProjectDefinitionDialog extends Dialog {
-	private final ProjectTemplateDefinition projectTemplateDefinition;
+public class LifecycleMandatoryPropertiesDialog extends Dialog {
+	private final List<String> mandatoryProperties;
 	private Map<String, Text> inputFields = new HashMap<String, Text>();
 	private Map<String, String> inputFieldValues = new HashMap<String, String>();
 
-	public ProjectDefinitionDialog(Shell parentShell, ProjectTemplateDefinition projectTemplateDefinition) {
+	LifecycleMandatoryPropertiesDialog(Shell parentShell, List<String> mandatoryProperties) {
 		super(parentShell);
-		this.projectTemplateDefinition = projectTemplateDefinition;
+		this.mandatoryProperties = mandatoryProperties;
 	}
 
 	public Map<String, String> getInputFieldValues() {
 		return inputFieldValues;
-	}
-
-	public ProjectDefinition projectDefinition() {
-		return new ProjectDefinition(projectTemplateDefinition, inputFieldValues);
 	}
 
 	@Override
@@ -43,8 +42,7 @@ public class ProjectDefinitionDialog extends Dialog {
 	protected Control createDialogArea(Composite parent) {
 		Composite twoColumnArea = createTwoColumnArea(parent);
 
-		projectTemplateDefinition.properties()
-				.forEach((label, defaultValue) -> addRowWith(twoColumnArea, label, defaultValue));
+		mandatoryProperties.forEach(label -> addRowWith(twoColumnArea, label, ""));
 
 		return twoColumnArea;
 	}
@@ -59,6 +57,15 @@ public class ProjectDefinitionDialog extends Dialog {
 		var inputFieldLayout = new GridData(SWT.FILL, SWT.CENTER, true, false);
 		inputField.setLayoutData(inputFieldLayout);
 		inputField.setText(defaultValue);
+
+		inputField.addModifyListener(new ModifyListener() {
+			@Override
+			public void modifyText(ModifyEvent e) {
+				getButton(IDialogConstants.OK_ID).setEnabled(inputFields.entrySet().stream()
+						.allMatch(f -> f.getValue().getText() != null && !f.getValue().getText().isBlank()));
+
+			}
+		});
 
 		inputFields.put(labelText, inputField);
 	}
@@ -75,7 +82,9 @@ public class ProjectDefinitionDialog extends Dialog {
 
 	@Override
 	protected void createButtonsForButtonBar(Composite parent) {
-		createButton(parent, IDialogConstants.OK_ID, IDialogConstants.OK_LABEL, true);
+		var okButton = createButton(parent, IDialogConstants.OK_ID, IDialogConstants.OK_LABEL, true);
+		okButton.setEnabled(false);
+
 		createButton(parent, IDialogConstants.CANCEL_ID, IDialogConstants.CANCEL_LABEL, false);
 	}
 

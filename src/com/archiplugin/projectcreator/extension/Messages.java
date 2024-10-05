@@ -13,6 +13,7 @@ public class Messages extends NLS {
 
 	public static String NewProjectFromTemplateMenuEntry;
 	public static String NewViewFromTemplateMenuEntry;
+	public static String MoveProjectToNextStageMenuEntry;
 
 	static {
 		// initialize resource bundle

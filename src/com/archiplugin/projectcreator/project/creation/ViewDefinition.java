@@ -1,27 +1,23 @@
-package com.archiplugin.projectcreator.project;
+package com.archiplugin.projectcreator.project.creation;
 
 import java.util.Map;
 import java.util.function.Consumer;
 
 import com.archimatetool.model.IArchimateModelObject;
 
-public class ProjectDefinition {
-	private final ProjectTemplateDefinition template;
+public class ViewDefinition {
+	private final ViewTemplateDefinition template;
 	private final Map<String, String> properties;
 
-	public ProjectDefinition(ProjectTemplateDefinition template, Map<String, String> properties) {
+	public ViewDefinition(ViewTemplateDefinition template, Map<String, String> properties) {
 		this.template = template;
 		this.properties = properties;
-	}
-
-	public String name(IArchimateModelObject object) {
-		return template.resolveName(this, object);
 	}
 
 	public void updatePropertiesAndName(Consumer<Map<String, String>> propertiesUpdater, Consumer<String> nameUpdater,
 			IArchimateModelObject object) {
 
 		propertiesUpdater.accept(properties);
-		nameUpdater.accept(template.resolveName(this, object));
+		nameUpdater.accept(template.resolveName(this, object, "Dummy"));
 	}
 }

@@ -8,6 +8,11 @@
             class="com.archiplugin.projectcreator.extension.ProjectCreationMenuExtensionContributionFactory"
             locationURI="popup:com.archimatetool.editor.treeModelView.new_menu?after=new_additions">
       </menuContribution>
+      <menuContribution
+            allPopups="true"
+            class="com.archiplugin.projectcreator.extension.ProjectLifecycleMenuExtensionContributionFactory"
+            locationURI="popup:com.archimatetool.editor.treeModelView?after=new">
+      </menuContribution>
    </extension>
    <extension
          point="org.eclipse.ui.preferencePages">

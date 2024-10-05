@@ -21,12 +21,11 @@ import com.archimatetool.model.FolderType;
 import com.archimatetool.model.IDiagramModel;
 import com.archimatetool.model.IFolder;
 import com.archimatetool.model.IProperties;
-import com.archiplugin.projectcreator.Activator;
-import com.archiplugin.projectcreator.preferences.ProjectCreatorPreferenceConstants;
-import com.archiplugin.projectcreator.project.CreateNewProject;
-import com.archiplugin.projectcreator.project.CreateViewFromTemplate;
-import com.archiplugin.projectcreator.project.ProjectTemplateDefinition;
-import com.archiplugin.projectcreator.project.ViewTemplateDefinition;
+import com.archiplugin.projectcreator.preferences.Preferences;
+import com.archiplugin.projectcreator.project.creation.CreateNewProject;
+import com.archiplugin.projectcreator.project.creation.CreateViewFromTemplate;
+import com.archiplugin.projectcreator.project.creation.ProjectTemplateDefinition;
+import com.archiplugin.projectcreator.project.creation.ViewTemplateDefinition;
 
 public class ProjectCreationMenuExtensionContributionFactory extends ExtensionContributionFactory {
 
@@ -156,8 +155,7 @@ public class ProjectCreationMenuExtensionContributionFactory extends ExtensionCo
 	}
 
 	private Optional<IFolder> findProjectTemplateIn(IFolder viewsFolder) {
-		var templateFolderId = Activator.INSTANCE.getPreferenceStore()
-				.getString(ProjectCreatorPreferenceConstants.PROJECT_CREATION_TEMPLATE_FOLDER);
+		var templateFolderId = Preferences.getTemplateFolderId();
 
 		for (Iterator<IFolder> iterator = viewsFolder.getFolders().iterator(); iterator.hasNext();) {
 			IFolder f = iterator.next();
