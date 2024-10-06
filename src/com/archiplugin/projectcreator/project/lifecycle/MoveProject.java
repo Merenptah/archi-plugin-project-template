@@ -41,13 +41,13 @@ public class MoveProject extends Command {
 		this.projectFolder = projectFolder;
 		this.mandatoryPropertiesDefinition = mandatoryPropertiesDefinition;
 		this.views = Folders.getAllViewsIn(projectFolder);
-		
+
 		this.oldProperties = projectFolder.getProperties().stream().map(p -> {
 			var prop = IArchimateFactory.eINSTANCE.createProperty();
 			prop.setKey(p.getKey());
 			prop.setValue(p.getValue());
 			return prop;
-		}).toList();
+		}).collect(Collectors.toList());
 
 		this.oldName = projectFolder.getName();
 		this.oldViewNames = views.viewIdsToName();

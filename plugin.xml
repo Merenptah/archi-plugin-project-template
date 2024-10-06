@@ -1,26 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.4"?>
 <plugin>
-   <extension
-         point="org.eclipse.ui.menus">
-      <menuContribution
-            allPopups="true"
-            class="com.archiplugin.projectcreator.extension.ProjectCreationMenuExtensionContributionFactory"
-            locationURI="popup:com.archimatetool.editor.treeModelView.new_menu?after=new_additions">
-      </menuContribution>
-      <menuContribution
-            allPopups="true"
-            class="com.archiplugin.projectcreator.extension.ProjectLifecycleMenuExtensionContributionFactory"
-            locationURI="popup:com.archimatetool.editor.treeModelView?after=new">
-      </menuContribution>
-   </extension>
-   <extension
-         point="org.eclipse.ui.preferencePages">
-      <page
-            class="com.archiplugin.projectcreator.preferences.ProjectCreationPreferencesPage"
-            id="com.archiplugin.projectcreator.ProjectCreatorPreferencePage"
-            name="%view.name">
-      </page>
-   </extension>
+	<extension
+		point="org.eclipse.ui.menus">
+		<menuContribution
+			allPopups="true"
+			class="com.archiplugin.projectcreator.extension.ProjectCreationMenuExtensionContributionFactory"
+			locationURI="popup:com.archimatetool.editor.treeModelView.new_menu?after=new_additions">
+		</menuContribution>
+		<menuContribution
+			allPopups="true"
+			class="com.archiplugin.projectcreator.extension.ProjectLifecycleMenuExtensionContributionFactory"
+			locationURI="popup:com.archimatetool.editor.treeModelView?after=new">
+		</menuContribution>
+	</extension>
+	<extension
+		point="org.eclipse.ui.preferencePages">
+		<page
+			class="com.archiplugin.projectcreator.preferences.ProjectCreationPreferencesPage"
+			id="com.archiplugin.projectcreator.ProjectCreatorPreferencePage"
+			name="%view.name">
+		</page>
+	</extension>
 
 </plugin>

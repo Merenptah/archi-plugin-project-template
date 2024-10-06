@@ -57,13 +57,36 @@ public class Folders {
 		return result;
 	}
 
-	public static record Folder(String modelname, IFolder folder) {
+	public static class Folder {
+		private String modelname;
+		private IFolder folder;
+
+		protected Folder(String modelname, IFolder folder) {
+			super();
+			this.modelname = modelname;
+			this.folder = folder;
+		}
+
+		public String modelname() {
+			return modelname;
+		}
+
+		public IFolder folder() {
+			return folder;
+		}
+
 		private List<IFolder> getSubfolders() {
 			return folder.getFolders();
 		}
 	};
 
-	public static record Views(List<IDiagramModel> views) {
+	public static class Views {
+		private List<IDiagramModel> views;
+
+		protected Views(List<IDiagramModel> views) {
+			this.views = views;
+		}
+
 		public boolean areEmpty() {
 			return views.isEmpty();
 		}
@@ -71,7 +94,7 @@ public class Folders {
 		public Map<String, String> viewIdsToName() {
 			return views.stream().collect(Collectors.toMap(e -> e.getId(), e -> e.getName()));
 		}
-		
+
 		public void rename(Map<String, String> viewIdsToNewNames) {
 			views.stream().forEach(v -> {
 				var newName = viewIdsToNewNames.get(v.getId());

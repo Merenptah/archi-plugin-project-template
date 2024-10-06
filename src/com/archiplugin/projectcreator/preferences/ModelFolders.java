@@ -49,7 +49,7 @@ public class ModelFolders {
 			return e.getValue().stream().filter(v -> v.getType().equals(FolderType.DIAGRAMS)).flatMap(
 					v -> dive(v.getFolders().stream().collect(Collectors.toMap(f -> f.getName(), Function.identity())))
 							.entrySet().stream().map(d -> new ModelFolder(e.getKey(), d.getKey(), d.getValue())));
-		}).toList();
+		}).collect(Collectors.toList());
 	}
 
 	private static Map<String, IFolder> dive(Map<String, IFolder> pathsToFolders) {
@@ -72,6 +72,27 @@ public class ModelFolders {
 		return result;
 	}
 
-	static record ModelFolder(String modelname, String folderPath, IFolder folder) {
+	static class ModelFolder {
+		private String modelname;
+		private String folderPath;
+		private IFolder folder;
+
+		protected ModelFolder(String modelname, String folderPath, IFolder folder) {
+			this.modelname = modelname;
+			this.folderPath = folderPath;
+			this.folder = folder;
+		}
+
+		public String modelname() {
+			return modelname;
+		}
+
+		public String folderPath() {
+			return folderPath;
+		}
+
+		public IFolder folder() {
+			return folder;
+		}
 	};
 }

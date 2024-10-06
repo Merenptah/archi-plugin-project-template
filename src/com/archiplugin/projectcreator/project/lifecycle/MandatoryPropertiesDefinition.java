@@ -3,7 +3,12 @@ package com.archiplugin.projectcreator.project.lifecycle;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public record MandatoryPropertiesDefinition(List<String> properties) {
+public class MandatoryPropertiesDefinition {
+	private List<String> properties;
+
+	public MandatoryPropertiesDefinition(List<String> properties) {
+		this.properties = properties;
+	}
 
 	public List<String> properties() {
 		return properties;

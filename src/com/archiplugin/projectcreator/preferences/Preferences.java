@@ -107,10 +107,16 @@ public class Preferences {
 				for (int j = 0; j < childs.getLength(); j++) {
 					var child = childs.item(j);
 					switch (child.getNodeName()) {
-					case FROM_FOLDER_ID -> fromFolderId = child.getTextContent();
-					case TO_FOLDER_ID -> toFolderId = child.getTextContent();
-					case MANDATORY_PROPS -> mandatoryProperties = child.getTextContent().isBlank() ? List.of()
-							: List.of(child.getTextContent().split(LIST_SEPARATOR));
+					case FROM_FOLDER_ID:
+						fromFolderId = child.getTextContent();
+						break;
+					case TO_FOLDER_ID:
+						toFolderId = child.getTextContent();
+						break;
+					case MANDATORY_PROPS:
+						mandatoryProperties = child.getTextContent().isBlank() ? List.of()
+								: List.of(child.getTextContent().split(LIST_SEPARATOR));
+						break;
 					}
 				}
 

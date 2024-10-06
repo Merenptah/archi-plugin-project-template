@@ -2,7 +2,7 @@ package com.archiplugin.projectcreator.preferences;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.archimatetool.model.IFolder;
 
@@ -18,7 +18,7 @@ public class Lifecycles {
 	}
 
 	private List<LifecycleDefinition> findContainingLifecycles(String id) {
-		return lifecycles.stream().filter(l -> l.getFromFolderId().equals(id)).toList();
+		return lifecycles.stream().filter(l -> l.getFromFolderId().equals(id)).collect(Collectors.toList());
 	}
 
 	public List<LifecycleDefinition> toList() {
