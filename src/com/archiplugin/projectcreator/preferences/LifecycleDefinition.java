@@ -1,7 +1,10 @@
 package com.archiplugin.projectcreator.preferences;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
+import com.archimatetool.model.FolderType;
 import com.archimatetool.model.IFolder;
 
 public class LifecycleDefinition {
@@ -16,7 +19,7 @@ public class LifecycleDefinition {
 	}
 
 	public String getFromFolderName() {
-		return this.fromFolder.getArchimateModel().getName() + ":" + this.fromFolder.getName();
+		return this.fromFolder.getArchimateModel().getName() + ":" + getFolderPath(this.fromFolder);
 	}
 
 	public String getFromFolderId() {
@@ -24,9 +27,25 @@ public class LifecycleDefinition {
 	}
 
 	public String getToFolderName() {
-		return this.toFolder.getArchimateModel().getName() + ":" + this.toFolder.getName();
+		var folderName = this.toFolder.eContainer();
+		
+		return this.toFolder.getArchimateModel().getName() + ":" + getFolderPath(this.toFolder);
 	}
 
+	private String getFolderPath(IFolder folder) {
+		var folderStack = new ArrayList<String>();
+		
+		folderStack.add(folder.getName());
+		while (folder.eContainer() instanceof IFolder && !((IFolder) folder.eContainer()).getType().equals(FolderType.DIAGRAMS)) {
+			folder = (IFolder) folder.eContainer();
+			folderStack.add(folder.getName());
+		}
+		
+		Collections.reverse(folderStack);
+		
+		return folderStack.stream().reduce("", (a,b) -> a + "/" + b);
+	}
+	
 	public String getToFolderId() {
 		return this.toFolder.getId();
 	}
