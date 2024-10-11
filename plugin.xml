@@ -10,8 +10,16 @@
       </menuContribution>
       <menuContribution
             allPopups="true"
-            class="com.archiplugin.projectcreator.extension.ProjectLifecycleMenuExtensionContributionFactory"
-            locationURI="popup:com.archimatetool.editor.treeModelView?after=new">
+            locationURI="popup:com.archimatetool.editor.treeModelView?after=com.archimatetool.editor.treeModelView.new_menu">
+         <menu
+               id="com.archiplugin.projectcreator.lifecycle_menu"
+               label="%menu.label.move_to_next_lifecycle"
+               tooltip="Configure lifecycles in the preferences">
+            <dynamic
+                  class="com.archiplugin.projectcreator.extension.ProjectLifecycleMenuContributionItem"
+                  id="com.archiplugin.projectcreator.lifecycle_items">
+            </dynamic>
+         </menu>
       </menuContribution>
    </extension>
    <extension
