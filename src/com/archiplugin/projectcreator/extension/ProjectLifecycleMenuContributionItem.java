@@ -23,6 +23,7 @@ import com.archimatetool.model.IProperties;
 import com.archiplugin.projectcreator.preferences.LifecycleDefinition;
 import com.archiplugin.projectcreator.preferences.Preferences;
 import com.archiplugin.projectcreator.project.lifecycle.MandatoryPropertiesDefinition;
+import com.archiplugin.projectcreator.project.lifecycle.MatchingLifecycleDefinition;
 import com.archiplugin.projectcreator.project.lifecycle.MoveProject;
 
 public class ProjectLifecycleMenuContributionItem extends ContributionItem implements IWorkbenchContribution {
@@ -75,23 +76,22 @@ public class ProjectLifecycleMenuContributionItem extends ContributionItem imple
 
 	private class MoveProjectToNextStageAction extends Action {
 		private final IFolder currentFolder;
-		private final LifecycleDefinition lifecycleDefinition;
+		private final MatchingLifecycleDefinition matchingLifecycle;
 
-		MoveProjectToNextStageAction(LifecycleDefinition lifecycle, IFolder currentFolder) {
+		MoveProjectToNextStageAction(MatchingLifecycleDefinition lifecycle, IFolder currentFolder) {
 			this.currentFolder = currentFolder;
-			this.lifecycleDefinition = lifecycle;
+			this.matchingLifecycle = lifecycle;
 		}
 
 		@Override
 		public String getText() {
-			return lifecycleDefinition.getToFolderName();
+			return matchingLifecycle.lifecycleDefinition().getToFolderName();
 		}
 
 		@Override
 		public void run() {
-			Command cmd = MoveProject.to(lifecycleDefinition.getToFolder(), currentFolder,
-					new MandatoryPropertiesDefinition(lifecycleDefinition.getMandatoryProperties()));
-			CommandStack commandStack = (CommandStack) lifecycleDefinition.getToFolder().getAdapter(CommandStack.class);
+			Command cmd = MoveProject.accordingTo(matchingLifecycle, currentFolder);
+			CommandStack commandStack = (CommandStack) matchingLifecycle.lifecycleDefinition().getToFolder().getAdapter(CommandStack.class);
 			commandStack.execute(cmd);
 
 		}

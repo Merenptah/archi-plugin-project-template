@@ -6,16 +6,19 @@ import java.util.List;
 
 import com.archimatetool.model.FolderType;
 import com.archimatetool.model.IFolder;
+import com.archiplugin.projectcreator.project.lifecycle.MandatoryPropertiesDefinition;
 
 public class LifecycleDefinition {
 	private IFolder fromFolder;
 	private IFolder toFolder;
+	private boolean moveToSameSubPath;
 	private List<String> mandatoryProperties;
 
-	LifecycleDefinition(IFolder fromFolder, IFolder toFolder, List<String> mandatoryProperties) {
+	LifecycleDefinition(IFolder fromFolder, IFolder toFolder, List<String> mandatoryProperties, boolean moveToSameSubPath) {
 		this.fromFolder = fromFolder;
 		this.toFolder = toFolder;
 		this.mandatoryProperties = mandatoryProperties;
+		this.moveToSameSubPath = moveToSameSubPath;
 	}
 
 	public String getFromFolderName() {
@@ -27,8 +30,6 @@ public class LifecycleDefinition {
 	}
 
 	public String getToFolderName() {
-		var folderName = this.toFolder.eContainer();
-		
 		return this.toFolder.getArchimateModel().getName() + ":" + getFolderPath(this.toFolder);
 	}
 
@@ -53,9 +54,13 @@ public class LifecycleDefinition {
 	public IFolder getToFolder() {
 		return toFolder;
 	}
-
-	public List<String> getMandatoryProperties() {
-		return mandatoryProperties;
+	
+	public MandatoryPropertiesDefinition getMandatoryProperties() {
+		return new MandatoryPropertiesDefinition(mandatoryProperties);
 	}
 
+	
+	public boolean shouldMoveToSameSubPath() {
+		return moveToSameSubPath;
+	}
 }

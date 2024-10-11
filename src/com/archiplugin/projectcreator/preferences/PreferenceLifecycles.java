@@ -21,7 +21,7 @@ public class PreferenceLifecycles {
 			ModelFolders.findFolderById(prefDef.fromFolderId())
 					.onSuccess(from -> ModelFolders.findFolderById(prefDef.toFolderId()).onSuccess(to -> {
 						lifecycleDefs.add(
-								new LifecycleDefinition(from.folder(), to.folder(), prefDef.mandatoryProperties()));
+								new LifecycleDefinition(from.folder(), to.folder(), prefDef.mandatoryProperties(), false));
 					}));
 		});
 

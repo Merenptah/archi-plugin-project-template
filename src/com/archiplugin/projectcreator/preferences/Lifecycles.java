@@ -1,10 +1,11 @@
 package com.archiplugin.projectcreator.preferences;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
 
 import com.archimatetool.model.IFolder;
+import com.archiplugin.projectcreator.project.lifecycle.MatchingLifecycleDefinition;
 
 public class Lifecycles {
 	private List<LifecycleDefinition> lifecycles;
@@ -17,24 +18,29 @@ public class Lifecycles {
 		return lifecycles.stream().anyMatch(l -> l.getFromFolderId().equals(id));
 	}
 
-	private List<LifecycleDefinition> findContainingLifecycles(String id) {
-		return lifecycles.stream().filter(l -> l.getFromFolderId().equals(id)).toList();
-	}
-
 	public List<LifecycleDefinition> toList() {
 		return List.copyOf(lifecycles);
 	}
 
-	public List<LifecycleDefinition> findMatchingLifecycles(IFolder folder) {
-		var result = new ArrayList<LifecycleDefinition>();
+	public List<MatchingLifecycleDefinition> findMatchingLifecycles(IFolder folder) {
+		var result = new ArrayList<MatchingLifecycleDefinition>();
 
+		var subPath = new LinkedList<String>();
 		while (folder.eContainer() instanceof IFolder) {
 			folder = (IFolder) folder.eContainer();
 
-			result.addAll(findContainingLifecycles(folder.getId()));
+			result.addAll(findContainingLifecycles(folder.getId(), new ArrayList<>(subPath)));
+			subPath.addFirst(folder.getName());
 		}
 
 		return result;
+	}
+	
+	private List<MatchingLifecycleDefinition> findContainingLifecycles(String id, List<String> subPath) {
+		return lifecycles.stream()
+				.filter(l -> l.getFromFolderId().equals(id))
+				.map(l -> new MatchingLifecycleDefinition(l, subPath))
+				.toList();
 	}
 
 }
