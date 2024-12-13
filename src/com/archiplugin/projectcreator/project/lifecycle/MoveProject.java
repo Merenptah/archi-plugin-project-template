@@ -58,14 +58,11 @@ public class MoveProject extends Command {
 
 	@Override
 	public void execute() {
-		if (!matchingLifecycle.subPath().isEmpty()) {
-			createSubPathFoldersCommand = new NewRecursiveFolderCommand(this.matchingLifecycle.lifecycleDefinition().getToFolder(), matchingLifecycle.subPath());
-		}
-		
 		propertyUpdate().ifPresent(propertyUpdater -> {
 			viewNamesUpdate().ifPresent(viewNamesUpdater -> {
 				var parentFolder = this.matchingLifecycle.lifecycleDefinition().getToFolder();
-				if (createSubPathFoldersCommand != null) {
+				if (matchingLifecycle.hasSubpath()) {
+					createSubPathFoldersCommand = new NewRecursiveFolderCommand(matchingLifecycle.lifecycleDefinition().getToFolder(), matchingLifecycle.subPath());
 					createSubPathFoldersCommand.execute();
 					if (createSubPathFoldersCommand.getLeaf().isPresent()) {
 						parentFolder = createSubPathFoldersCommand.getLeaf().get();
