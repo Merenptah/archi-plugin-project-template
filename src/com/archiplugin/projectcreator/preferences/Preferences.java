@@ -142,7 +142,7 @@ public class Preferences {
 				addAttribute(doc, element, FROM_FOLDER_ID, def.getFromFolderId());
 				addAttribute(doc, element, TO_FOLDER_ID, def.getToFolderId());
 				addAttribute(doc, element, MANDATORY_PROPS,
-						def.getMandatoryProperties().stream().collect(Collectors.joining(LIST_SEPARATOR)));
+						def.getMandatoryProperties().properties().stream().collect(Collectors.joining(LIST_SEPARATOR)));
 			});
 
 			TransformerFactory transformerFactory = TransformerFactory.newInstance();

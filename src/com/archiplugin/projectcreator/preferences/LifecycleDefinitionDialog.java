@@ -176,7 +176,7 @@ public class LifecycleDefinitionDialog extends Dialog {
 							.collect(Collectors.toList());
 					mandatoryPropertiesTable.setInput(new ArrayList<>(templateProperties));
 					lifecycleDefinition.ifPresent(l -> {
-						mandatoryPropertiesTable.setCheckedElements(l.getMandatoryProperties().toArray());
+						mandatoryPropertiesTable.setCheckedElements(l.getMandatoryProperties().properties().toArray());
 					});
 				});
 			}, error -> MessageDialog.openError(getShell(), Messages.LifecycleDefinitionDialog_ErrorHeader, error));
@@ -199,7 +199,7 @@ public class LifecycleDefinitionDialog extends Dialog {
 			var selectedProperties = Stream.of(mandatoryPropertiesTable.getCheckedElements()).map(Object::toString)
 					.collect(Collectors.toList());
 			lifecycleDefinition = Optional.of(new LifecycleDefinition(selectedFromFolder.folder(),
-					selectedToFolder.folder(), selectedProperties));
+					selectedToFolder.folder(), selectedProperties, false));
 		} else {
 			lifecycleDefinition = Optional.empty();
 		}

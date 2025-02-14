@@ -16,6 +16,7 @@ import com.archimatetool.editor.views.tree.commands.MoveFolderCommand;
 import com.archimatetool.model.IArchimateFactory;
 import com.archimatetool.model.IFolder;
 import com.archimatetool.model.IProperty;
+import com.archiplugin.projectcreator.preferences.LifecycleDefinition;
 import com.archiplugin.projectcreator.preferences.Preferences;
 import com.archiplugin.projectcreator.project.Folders;
 import com.archiplugin.projectcreator.project.Folders.Views;
@@ -24,24 +25,22 @@ import com.archiplugin.projectcreator.project.creation.ProjectTemplateDefinition
 
 public class MoveProject extends Command {
 
-	private IFolder newParent;
+	private MatchingLifecycleDefinition matchingLifecycle;
 	private IFolder projectFolder;
 	private Views views;
-	private MandatoryPropertiesDefinition mandatoryPropertiesDefinition;
 	private Command moveFolderCommand;
+	private NewRecursiveFolderCommand createSubPathFoldersCommand;
 
 	private List<IProperty> oldProperties;
 	private String oldName;
 	private Map<String, String> oldViewNames;
 
-	private MoveProject(IFolder newParent, IFolder projectFolder,
-			MandatoryPropertiesDefinition mandatoryPropertiesDefinition) {
+	private MoveProject(MatchingLifecycleDefinition matchingLifecycle, IFolder projectFolder) {
 		super();
-		this.newParent = newParent;
+		this.matchingLifecycle = matchingLifecycle;
 		this.projectFolder = projectFolder;
-		this.mandatoryPropertiesDefinition = mandatoryPropertiesDefinition;
 		this.views = Folders.getAllViewsIn(projectFolder);
-		
+
 		this.oldProperties = projectFolder.getProperties().stream().map(p -> {
 			var prop = IArchimateFactory.eINSTANCE.createProperty();
 			prop.setKey(p.getKey());
@@ -53,16 +52,24 @@ public class MoveProject extends Command {
 		this.oldViewNames = views.viewIdsToName();
 	}
 
-	public static MoveProject to(IFolder newParent, IFolder projectFolder,
-			MandatoryPropertiesDefinition mandatoryPropertiesDefinition) {
-		return new MoveProject(newParent, projectFolder, mandatoryPropertiesDefinition);
+	public static MoveProject accordingTo(MatchingLifecycleDefinition matchingLifecycle, IFolder projectFolder) {
+		return new MoveProject(matchingLifecycle, projectFolder);
 	}
 
 	@Override
 	public void execute() {
 		propertyUpdate().ifPresent(propertyUpdater -> {
 			viewNamesUpdate().ifPresent(viewNamesUpdater -> {
-				this.moveFolderCommand = new MoveFolderCommand(this.newParent, this.projectFolder);
+				var parentFolder = this.matchingLifecycle.lifecycleDefinition().getToFolder();
+				if (matchingLifecycle.hasSubpath()) {
+					createSubPathFoldersCommand = new NewRecursiveFolderCommand(matchingLifecycle.lifecycleDefinition().getToFolder(), matchingLifecycle.subPath());
+					createSubPathFoldersCommand.execute();
+					if (createSubPathFoldersCommand.getLeaf().isPresent()) {
+						parentFolder = createSubPathFoldersCommand.getLeaf().get();
+					};
+				}
+				
+				this.moveFolderCommand = new MoveFolderCommand(parentFolder, this.projectFolder);
 				this.moveFolderCommand.execute();
 
 				propertyUpdater.run();
@@ -93,7 +100,7 @@ public class MoveProject extends Command {
 		var propertiesWithSetValues = folderProps.stream().filter(p -> p.getValue() != null && !p.getValue().isBlank())
 				.map(p -> p.getKey()).collect(Collectors.toList());
 
-		var mandatoryProperties = mandatoryPropertiesDefinition.without(propertiesWithSetValues);
+		var mandatoryProperties = matchingLifecycle.lifecycleDefinition().getMandatoryProperties().without(propertiesWithSetValues);
 
 		if (mandatoryProperties.isEmpty()) {
 			return Optional.of(() -> {
@@ -144,9 +151,7 @@ public class MoveProject extends Command {
 
 	@Override
 	public void redo() {
-		if (this.moveFolderCommand != null) {
-			this.moveFolderCommand.execute();
-		}
+		this.execute();
 	}
 
 	@Override
@@ -157,6 +162,9 @@ public class MoveProject extends Command {
 			this.projectFolder.getProperties().addAll(oldProperties);
 			this.projectFolder.setName(oldName);
 			this.views.rename(oldViewNames);
+		}
+		if (this.createSubPathFoldersCommand != null) {
+			this.createSubPathFoldersCommand.undo();
 		}
 	}
 }
